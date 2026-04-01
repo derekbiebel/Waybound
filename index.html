@@ -541,13 +541,15 @@ async function confirmChore() {
     });
     else S.sceneImageLoading = false;
     save(); render();
-    // Arrival effects
-    showArrival(chosenNode.type);
-    setMoodTint(chosenNode.type);
+    // Arrival effects — deferred so render() DOM is settled first
+    setTimeout(function() {
+      showArrival(chosenNode.type);
+      setMoodTint(chosenNode.type);
+    }, 50);
     setTimeout(function() {
       var lp2 = S.passages[S.passages.length-1];
       if (lp2) typewriterStory(lp2.text);
-    }, 800);
+    }, 900);
     showToast('Chore done. The path opens.');
   }
 }
@@ -584,19 +586,26 @@ function setMoodTint(nodeType) {
 function typewriterStory(text) {
   var el = document.querySelector('.story-body');
   if (!el || !text) return;
-  el.classList.add('typing');
   el.innerHTML = '';
-  var chars = text.split('');
-  var baseDelay = 18; // ms per character
-  chars.forEach(function(ch, i) {
-    var span = document.createElement('span');
-    span.className = 'story-char';
-    span.textContent = ch;
-    span.style.animationDelay = (i * baseDelay) + 'ms';
-    el.appendChild(span);
-  });
-  // Remove typing class after animation completes
-  setTimeout(function() { el.classList.remove('typing'); }, chars.length * baseDelay + 200);
+  var words = text.split(' ');
+  var delay = 0;
+  var chunkSize = 3; // reveal 3 words at a time
+  for (var i = 0; i < words.length; i += chunkSize) {
+    (function(chunk, d) {
+      setTimeout(function() {
+        var span = document.createElement('span');
+        span.className = 'story-word-chunk';
+        span.textContent = chunk + ' ';
+        span.style.opacity = '0';
+        span.style.transition = 'opacity 0.25s ease';
+        el.appendChild(span);
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() { span.style.opacity = '1'; });
+        });
+      }, d);
+    })(words.slice(i, i + chunkSize).join(' '), delay);
+    delay += 80;
+  }
 }
 
 function hx(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
