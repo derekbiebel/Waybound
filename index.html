@@ -216,7 +216,16 @@ MARA: Your younger sister. Botanist. Vanished six months ago chasing the Temple 
 CASTELLAN VEY: Surveyor for Herath Logging Co. Charming, experienced, three days ahead of you. Wants the map inside the temple — proves the valley rivers are navigable, worth logging. He would bury Mara's journal without a thought.
 THE TEMPLE: Contains Mara's final journal and a hand-drawn map of the valley's river system. The map determines whether Herath Logging destroys the valley.
 THE REAL STAKES: What happened to Mara. Beating Vey. What you do with what she found.
-TONE: Personal. Oregon Trail stakes inside a Stardew Valley world. Beautiful setting, real consequences.`;
+
+WRITING STYLE — mirror Sarah J. Maas precisely:
+- Short, punchy sentences land like blows. Then a longer breathless one that pulls the reader under before they can surface.
+- Physical sensation first, always. The ache in your legs. The copper taste of fear. The weight of the pack. Body before thought.
+- Emotions are named directly and without apology. You are furious. You are terrified. You miss her so much it is a physical thing.
+- Fragments are sentences. Used for impact. Deliberately.
+- Interior monologue bleeds into action — the protagonist's thoughts cut in mid-scene without transition.
+- Every scene ends on a single weighted line. One image. One realization. One breath held.
+- Avoid: flowery description for its own sake, passive voice, vague abstractions. Every word must earn its place.
+- The jungle is not backdrop. It is a character — alive, watching, indifferent to your grief.`;
 
 function fresh() {
   return {
@@ -336,10 +345,12 @@ function journalSummary() {
 async function genOpening() {
   return ai(LORE + `
 
-Write the story opening. 5-6 sentences, second person.
-The protagonist has just found Mara's torn journal page wedged under the floorboards of her cottage. They have been here weeks sorting her things. The page is dated four months ago — she made it past the river crossing. Her last line: "Vey knows. Move faster."
-End as they shoulder a pack, step off the porch into morning light, and push through the garden gate into the jungle. Driven. Frightened. Aware Vey already has a head start.
-Specific and personal. No lists. No markdown.`);
+Write the story opening. Second person. 5-6 sentences maximum.
+The protagonist has just found Mara's torn journal page wedged under the floorboards of her cottage. Weeks sorting her things. The page dated four months ago — she made it past the river crossing. Her last line: "Vey knows. Move faster."
+End as they shoulder the pack, step off the porch, push through the garden gate into the jungle.
+
+Follow the writing style exactly as described above. Start with a physical sensation or action — not a description. Use fragments. Name the emotion directly. End on a single weighted line.
+No lists. No markdown.`);
 }
 
 async function genPathDescriptions(nextNodes) {
@@ -413,14 +424,15 @@ What happened this leg: ${chStr}
 ${nearEnd ? 'PROXIMITY: The temple is close now. Ancient carved stone glimpsed through the canopy. Urgency is building.' : ''}
 ${veryNearEnd ? 'PROXIMITY: This is almost certainly the final push. Vey may already be at the temple. Everything converges here.' : ''}
 
-Write 5-7 punchy second-person sentences. Requirements:
-1. The resource changes MUST come from specific story events — never name the numbers directly, but every change must be explained by something that physically happens (injury, eating, finding cache, etc.)
-2. The passage MUST fit the node type (${chosenNode.type}): ${nodeContext.split('.')[0]}.
-3. The protagonist's current state (injuries, hunger, morale) must color the writing — a wounded person moves differently, sees differently.
-4. Advance the Mara/Vey storyline with at least one concrete detail: a clue, a trace, a decision, a memory triggered by the environment.
-5. The writing must feel continuous with the previous passage — same journey, same body, same emotional thread.
-6. End with one sharp sensory detail of where you are now.
-No vague mood prose. No markdown. Every sentence must do work.`;
+Write 5-7 sentences, second person. Follow the writing style exactly as described above. Requirements:
+1. Open with a physical sensation or action — body first, always.
+2. Resource changes MUST come from specific story events — never state numbers, but every change is explained by something that physically happens.
+3. Fit the node type (${chosenNode.type}): ${nodeContext.split('.')[0]}.
+4. The protagonist's physical state colors everything — wounded people move differently, think differently, see the jungle differently.
+5. Advance the Mara/Vey thread with one concrete detail: a clue, a trace, a memory, a decision.
+6. Feel continuous with the previous passage — same body, same grief, same thread.
+7. End on a single weighted line. One image. One realization. Hold it.
+No vague mood prose. No markdown. Fragments are allowed and encouraged.`;
   return ai(prompt);
 }
 
@@ -432,23 +444,22 @@ ${journalSummary()}
 
 Last passage: "${last.slice(0,300)}"
 
-Write the ending. 7-9 sentences, second person. The ending MUST reflect the specific journey this protagonist took — their injuries, their choices, what they found along the way.
+Write the ending. Second person. Follow the writing style exactly as described above. The ending MUST reflect this specific journey — their injuries, their choices, what they carried.
 
 ${isDead ?
-  `The protagonist has broken down — too hurt, too hungry, too exhausted to continue. The jungle wins this round.
-Write this honestly:
-- The specific moment of collapse (physical, tied to their actual resource state)
-- The grief of not knowing what happened to Mara, the fear Vey gets there first
-- One memory from the journey that won't leave them
-- End with a single line of resolve — quiet, not triumphant. They will come back.` :
-  `The protagonist has reached the Temple of Aurathen. Write the full earned payoff:
-- Approaching the temple: what it looks and smells like after this specific journey
-- Whether Vey is already there — and what that means
-- Finding Mara's final journal: what it reveals about what actually happened to her
-- The map she hid, and where
-- The choice about what to do with it — and what the protagonist actually decides
-Make it genuinely moving. This was always a story about a sibling. Honor that.`}
-No markdown. No summarizing. Write it as story.`;
+  `The protagonist has broken down — too hurt, too hungry, too exhausted. The jungle wins this round.
+- Open with the physical moment of collapse. Name it exactly.
+- The grief of not knowing what happened to Mara. The fear that Vey is already there.
+- One specific memory from this journey that surfaces now, at the worst moment.
+- End on a single quiet line of resolve. Not triumphant. Just: they will come back.` :
+  `The protagonist has reached the Temple of Aurathen. The full earned payoff:
+- The approach: what the temple looks and smells like after everything this body has been through to get here.
+- Vey — is he already there? What does that mean?
+- Finding Mara's final journal. What it reveals. What actually happened to her.
+- The map she hid. Where.
+- The choice. What the protagonist actually decides — and why.
+Make it genuinely moving. Name the emotion. This was always a story about a sibling. Honor that.`}
+No markdown. No bullet points in the output. Write it as story. End on a single weighted line.`;
   return ai(prompt);
 }
 
