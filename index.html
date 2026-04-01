@@ -45,23 +45,25 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .hint-icon{font-size:1.2rem;flex-shrink:0}
 .start-hints{margin-bottom:26px}
 /* Game */
-.game-header-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0 8px;border-bottom:3px solid var(--border2);margin-bottom:14px;position:sticky;top:0;background:var(--bg);z-index:20}
+.game-header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 4px;border-bottom:1px solid rgba(80,45,10,0.25)}
 .game-title{font-size:1.15rem;color:var(--green)}
 .game-meta{display:flex;align-items:center;gap:8px}
-.day-badge{font-size:.72rem;color:var(--brown);background:var(--amber3);border:2px solid var(--amber2);border-radius:20px;padding:4px 10px;font-family:'Fredoka',sans-serif;box-shadow:0 2px 0 var(--amber2)}
+.day-badge{font-size:.65rem;color:rgba(55,25,5,0.85);background:rgba(225,200,140,0.80);border:1px solid rgba(80,45,10,0.45);border-radius:2px;padding:3px 10px;font-family:Georgia,serif;font-style:italic;letter-spacing:.05em}
 .reset-btn{background:none;border:2px solid var(--border);border-radius:20px;padding:4px 10px;font-family:'Fredoka',sans-serif;font-size:.7rem;color:var(--text2);cursor:pointer}
 .reset-btn:active{background:var(--rose3);border-color:var(--rose);color:var(--rose)}
 /* Resources */
 .resources{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
-.res-card{background:var(--card);border:3px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;box-shadow:0 3px 0 var(--border2);transition:border-color .3s}
-.res-card.danger{border-color:var(--rose);animation:wobble .7s ease-in-out infinite alternate}
+.res-card{background:rgba(232,215,158,0.72);border:1.5px solid rgba(80,45,10,0.45);border-radius:3px;padding:8px 6px;text-align:center;box-shadow:inset 0 0 12px rgba(140,90,20,0.08),1px 2px 4px rgba(30,12,0,0.18);transition:border-color .3s;position:relative}
+.res-card::before{content:'';position:absolute;inset:2px;border:0.5px solid rgba(80,45,10,0.18);border-radius:2px;pointer-events:none}
+.res-card.danger{border-color:rgba(160,30,20,0.65);animation:wobble .7s ease-in-out infinite alternate}
 @keyframes wobble{from{transform:rotate(-.5deg)}to{transform:rotate(.5deg)}}
-.res-icon{font-size:1.3rem;display:block;margin-bottom:4px}
-.res-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text2);margin-bottom:5px;display:block;font-family:'Fredoka',sans-serif}
-.res-track{height:8px;background:var(--tan2);border-radius:20px;overflow:hidden;margin-bottom:5px;border:1px solid var(--border)}
-.res-fill{height:100%;border-radius:20px;transition:width .7s ease}
-.res-val{font-family:'Fredoka',sans-serif;font-size:.95rem;font-weight:600;display:block}
+.res-icon{display:block;margin:0 auto 4px;opacity:0.88}
+.res-label{font-size:.58rem;text-transform:uppercase;letter-spacing:.15em;color:rgba(60,32,8,0.72);margin-bottom:5px;display:block;font-family:'Georgia',serif;font-style:italic}
+.res-track{height:6px;background:rgba(160,120,60,0.22);border-radius:0;overflow:hidden;margin-bottom:4px;border:0.8px solid rgba(80,45,10,0.28)}
+.res-fill{height:100%;border-radius:0;transition:width .7s ease}
+.res-val{font-family:'Georgia',serif;font-size:.95rem;font-weight:bold;color:rgba(45,20,5,0.88)
 .res-warn{font-size:.58rem;color:var(--rose);display:block;margin-top:2px;font-family:'Fredoka',sans-serif;animation:flash 1s infinite}
+.res-card .res-icon svg{display:block;margin:0 auto}
 @keyframes flash{0%,100%{opacity:1}50%{opacity:.4}}
 /* Scene image */
 .scene-wrap{margin-bottom:14px;border:3px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 4px 0 var(--border2);background:var(--green4);min-height:80px;display:flex;align-items:center;justify-content:center}
@@ -75,7 +77,7 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .loading-row{display:flex;align-items:center;gap:10px;color:var(--text2);font-style:italic;font-size:.9rem}
 .spin{display:inline-block;animation:spin 1.2s linear infinite;font-size:1.2rem}
 @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-.fab{position:fixed;bottom:24px;right:18px;background:var(--amber);color:var(--brown);border:3px solid #a06010;border-radius:30px;padding:14px 22px;font-family:'Fredoka',sans-serif;font-weight:600;font-size:.95rem;cursor:pointer;box-shadow:0 4px 0 #a06010;z-index:50;transition:transform .1s,box-shadow .1s}
+.fab{position:fixed;bottom:28px;right:20px;background:rgba(50,25,6,0.90);color:rgba(232,212,158,0.96);border:1.5px solid rgba(232,212,158,0.4);border-radius:3px;padding:12px 20px;font-family:'Georgia',serif;font-style:italic;font-size:.92rem;letter-spacing:.05em;cursor:pointer;box-shadow:3px 3px 0 rgba(15,5,0,0.50);transition:all .12s;z-index:100}.fab:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(15,5,0,0.50)}
 .fab:active{transform:translateY(2px);box-shadow:0 2px 0 #a06010}
 .history-toggle{font-size:.82rem;color:var(--text2);cursor:pointer;padding:8px 0;display:block;font-family:'Fredoka',sans-serif}
 .history-passage{opacity:.55;margin-top:10px}
@@ -146,14 +148,42 @@ const SAVE_KEY = 'waybound_v1';
 const WIN_AT = 14;
 const MAX = 100;
 const CHORES = [{"id": "laundry_wash", "name": "Laundry Wash", "icon": "🫧", "diff": "easy", "picks": 1}, {"id": "laundry_fold", "name": "Laundry Fold", "icon": "👕", "diff": "medium", "picks": 1}, {"id": "dishes", "name": "Dishes & Kitchen", "icon": "🍽️", "diff": "medium", "picks": 1}, {"id": "vacuuming", "name": "Vacuum & Floors", "icon": "🧹", "diff": "medium", "picks": 1}, {"id": "bathrooms", "name": "Bathrooms", "icon": "🚿", "diff": "hard", "picks": 2}, {"id": "trash", "name": "Take Out Trash", "icon": "🗑️", "diff": "easy", "picks": 1}, {"id": "yard", "name": "Yard Work", "icon": "🌿", "diff": "hard", "picks": 2}, {"id": "norm_walk", "name": "Norm Walk", "icon": "🐕", "diff": "medium", "picks": 1}];
-const RES = [{"id": "gold", "icon": "🪙", "name": "Gold", "color": "#c88010", "bar": "linear-gradient(90deg,#e8a830,#f5d080)"}, {"id": "health", "icon": "❤️", "name": "Health", "color": "#c04050", "bar": "linear-gradient(90deg,#d4707a,#f0b8bc)"}, {"id": "food", "icon": "🍓", "name": "Food", "color": "#4a8030", "bar": "linear-gradient(90deg,#5a8f4a,#9acf7a)"}];
-const NODES = [{"id": 0, "row": 0, "col": 1, "type": "start"}, {"id": 1, "row": 1, "col": 0, "type": "encounter"}, {"id": 2, "row": 1, "col": 2, "type": "rest"}, {"id": 3, "row": 2, "col": 0, "type": "unknown"}, {"id": 4, "row": 2, "col": 1, "type": "event"}, {"id": 5, "row": 2, "col": 3, "type": "elite"}, {"id": 6, "row": 3, "col": 0, "type": "rest"}, {"id": 7, "row": 3, "col": 1, "type": "encounter"}, {"id": 8, "row": 3, "col": 2, "type": "unknown"}, {"id": 9, "row": 3, "col": 3, "type": "event"}, {"id": 10, "row": 4, "col": 0, "type": "elite"}, {"id": 11, "row": 4, "col": 1, "type": "unknown"}, {"id": 12, "row": 4, "col": 2, "type": "rest"}, {"id": 13, "row": 4, "col": 3, "type": "encounter"}, {"id": 14, "row": 5, "col": 1, "type": "temple"}];
-const CONNECTIONS = [[0, 1], [0, 2], [1, 3], [1, 4], [2, 4], [2, 5], [3, 6], [3, 7], [4, 7], [4, 8], [5, 8], [5, 9], [6, 10], [6, 11], [7, 11], [7, 12], [8, 12], [8, 13], [9, 13], [10, 14], [11, 14], [12, 14], [13, 14]];
+const RES = [
+  {id:'gold', name:'Gold', bar:'rgba(160,105,15,0.85)',  color:'rgba(100,55,8,0.9)',
+   icon:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="rgba(80,45,8,0.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 1.1 3 2.5c0 1.5-1.3 2-3 2.5-1.7.5-3 1-3 2.5 0 1.4 1.3 2.5 3 2.5s3-1.1 3-2.5" stroke-width="1.1"/></svg>'},
+  {id:'health', name:'Vitality', bar:'rgba(155,35,25,0.80)', color:'rgba(120,25,15,0.9)',
+   icon:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="rgba(110,22,12,0.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21C12 21 3 14.5 3 8.5A5 5 0 0 1 12 6a5 5 0 0 1 9 2.5C21 14.5 12 21 12 21z"/></svg>'},
+  {id:'food', name:'Provisions', bar:'rgba(55,90,30,0.80)',  color:'rgba(40,70,18,0.9)',
+   icon:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="rgba(40,70,18,0.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18M6 9c3 0 6-2 6-6M18 3a4 4 0 0 0 0 8M18 11v10"/></svg>'},
+];
+const NODES = [
+  {id:0,  row:0, col:1, type:'start'},
+  {id:1,  row:1, col:0, type:'encounter'},{id:2,  row:1, col:2, type:'rest'},
+  {id:3,  row:2, col:0, type:'unknown'}, {id:4,  row:2, col:1, type:'event'}, {id:5,  row:2, col:3, type:'elite'},
+  {id:6,  row:3, col:0, type:'rest'},    {id:7,  row:3, col:1, type:'encounter'},{id:8,  row:3, col:2, type:'unknown'},{id:9,  row:3, col:3, type:'event'},
+  {id:10, row:4, col:0, type:'elite'},   {id:11, row:4, col:1, type:'rest'},    {id:12, row:4, col:2, type:'encounter'},{id:13, row:4, col:3, type:'unknown'},
+  {id:14, row:5, col:0, type:'unknown'}, {id:15, row:5, col:1, type:'event'},   {id:16, row:5, col:2, type:'rest'},    {id:17, row:5, col:3, type:'elite'},
+  {id:18, row:6, col:0, type:'rest'},    {id:19, row:6, col:1, type:'encounter'},{id:20, row:6, col:2, type:'unknown'},{id:21, row:6, col:3, type:'event'},
+  {id:22, row:7, col:0, type:'elite'},   {id:23, row:7, col:1, type:'unknown'}, {id:24, row:7, col:2, type:'rest'},    {id:25, row:7, col:3, type:'encounter'},
+  {id:26, row:8, col:0, type:'event'},   {id:27, row:8, col:1, type:'rest'},    {id:28, row:8, col:2, type:'encounter'},{id:29, row:8, col:3, type:'elite'},
+  {id:30, row:9, col:1, type:'temple'},
+]
+const CONNECTIONS = [
+  [0,1],[0,2],
+  [1,3],[1,4],[2,4],[2,5],
+  [3,6],[3,7],[4,7],[4,8],[5,8],[5,9],
+  [6,10],[6,11],[7,11],[7,12],[8,12],[8,13],[9,13],
+  [10,14],[10,15],[11,15],[11,16],[12,16],[12,17],[13,17],
+  [14,18],[14,19],[15,19],[15,20],[16,20],[16,21],[17,21],
+  [18,22],[18,23],[19,23],[19,24],[20,24],[20,25],[21,25],
+  [22,26],[22,27],[23,27],[23,28],[24,28],[24,29],[25,29],
+  [26,30],[27,30],[28,30],[29,30],
+]
 const NODE_TYPES = {"start": {"icon": "🏡", "label": "Home", "color": "#5a8f4a", "bg": "#edf7e8"}, "encounter": {"icon": "⚔️", "label": "Encounter", "color": "#c04050", "bg": "#fde8ea"}, "rest": {"icon": "🏕️", "label": "Rest Stop", "color": "#5b9fd4", "bg": "#dff0fa"}, "unknown": {"icon": "❓", "label": "Unknown", "color": "#8b6fbf", "bg": "#f0eaf8"}, "elite": {"icon": "💀", "label": "Elite", "color": "#7a1a1a", "bg": "#fde8ea"}, "event": {"icon": "📜", "label": "Event", "color": "#e8a830", "bg": "#fef3d0"}, "temple": {"icon": "🏛️", "label": "Temple", "color": "#e8a830", "bg": "#fef3d0"}};
 const NODE_DELTAS = {"encounter": {"goldDelta": 15, "healthDelta": -18, "foodDelta": -8}, "rest": {"goldDelta": 0, "healthDelta": 20, "foodDelta": -20}, "unknown": {"goldDelta": 8, "healthDelta": -8, "foodDelta": -10}, "elite": {"goldDelta": 28, "healthDelta": -28, "foodDelta": -6}, "event": {"goldDelta": 5, "healthDelta": 5, "foodDelta": -8}, "start": {"goldDelta": 0, "healthDelta": 0, "foodDelta": 0}, "temple": {"goldDelta": 0, "healthDelta": 0, "foodDelta": 0}};
 const NODE_PROMPTS = {"encounter": "This is an ENCOUNTER node — dangerous, high stakes. The protagonist faces a direct physical challenge: a territorial animal, treacherous terrain, Vey's guards, a sudden storm. High health cost likely. Gold reward possible if they overcome it.", "rest": "This is a REST node — a moment to recover. The protagonist finds shelter, tends wounds, eats a proper meal. Health recovers but food is consumed. Slower, safer, personal.", "unknown": "This is an UNKNOWN node — anything could happen. The protagonist investigates something unexpected: strange sounds, odd markings, an abandoned campsite. Outcome genuinely unpredictable.", "elite": "This is an ELITE node — very dangerous, very rewarding. The protagonist faces something truly threatening: a large predator, Vey himself, a near-fatal trap. Serious health cost but significant gold or information reward.", "event": "This is an EVENT node — a story moment tied to Mara or Vey. The protagonist discovers a clue, a memory, a choice. This must advance the central mystery meaningfully.", "temple": "This is the TEMPLE — the journey ends here."};
 const CHAPTERS = ["The Journal Page", "The First Steps", "Deeper In", "The River", "Old Paths", "What She Left", "Signs of Vey", "The Canopy", "Almost There", "Ancient Stone", "The Temple Gate"];
-const NUM_ROWS = 6;
+const NUM_ROWS = 10;
 const COLS_PER_ROW = 4;
 
 const LORE = `STORY CONTEXT — weave into every passage:
@@ -491,16 +521,18 @@ function drawSpireMap(canvasId, highlightNextNodes) {
       // Traveled road — looks like ink drawn on parchment
       // Cream halo so it reads over map detail
       ctx.setLineDash([8,5]);
-      ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(255,248,210,0.92)';
+      ctx.setLineDash([]);
+      ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(248,235,195,0.90)';
       ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.quadraticCurveTo(mx,my,b.x,b.y); ctx.stroke();
-      ctx.lineWidth = 3.2; ctx.strokeStyle = INK;
+      ctx.lineWidth = 3.5; ctx.strokeStyle = INK;
       ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.quadraticCurveTo(mx,my,b.x,b.y); ctx.stroke();
     } else {
       // Unvisited — faint dotted suggestion of a route
       ctx.setLineDash([3,9]);
-      ctx.lineWidth = 5.5; ctx.strokeStyle = 'rgba(255,248,210,0.72)';
+      ctx.setLineDash([7,7]);
+      ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(248,235,195,0.68)';
       ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.quadraticCurveTo(mx,my,b.x,b.y); ctx.stroke();
-      ctx.lineWidth = 2.0; ctx.strokeStyle = INK_FAINT;
+      ctx.lineWidth = 2.2; ctx.strokeStyle = INK_FAINT;
       ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.quadraticCurveTo(mx,my,b.x,b.y); ctx.stroke();
     }
     ctx.restore();
@@ -527,18 +559,19 @@ function drawSpireMap(canvasId, highlightNextNodes) {
 
     // Cream backing circle — small, subtle, like ink wash on parchment
     // Larger and more opaque for active/current nodes
-    // Always draw backing circle — stronger for active nodes
-    var br = 12*u + (isCur?6:isNext?4:0);
+    // Soft parchment wash behind symbol — no circle border, looks like ink wash
+    var br = (isCur ? 15 : isNext ? 13 : 10) * u;
     ctx.beginPath(); ctx.arc(x, y, br, 0, Math.PI*2);
-    var bAlpha = isCur ? 0.88 : isNext ? 0.78 : isV ? 0.62 : 0.50;
-    ctx.fillStyle = 'rgba(238,220,165,' + bAlpha + ')';
-    ctx.shadowColor = 'rgba(15,5,0,0.55)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2.5;
+    var bAlpha = isCur ? 0.82 : isNext ? 0.55 : isV ? 0.28 : 0.18;
+    ctx.fillStyle = 'rgba(235,215,155,' + bAlpha + ')';
+    ctx.shadowColor = 'rgba(12,4,0,0.55)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
     ctx.fill(); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-    // Ink border ring
-    ctx.beginPath(); ctx.arc(x, y, br, 0, Math.PI*2);
-    ctx.strokeStyle = 'rgba(18,5,1,0.88)';
-    ctx.lineWidth = isCur ? 2.0 : isNext ? 1.5 : 1.1;
-    ctx.stroke();
+    // Only current node gets a hand-drawn ink ring — like circling a location on a map
+    if (isCur) {
+      ctx.beginPath(); ctx.arc(x, y, br, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(22,8,2,0.90)';
+      ctx.lineWidth = 1.8; ctx.setLineDash([]); ctx.stroke();
+    }
 
     // Draw ink symbol per node type
     ctx.strokeStyle = isCur ? 'rgba(40,15,4,0.95)' : INK;
@@ -844,7 +877,7 @@ function rGame() {
   }
   return '<div class="game-header-row">'
     + '<span class="fredoka game-title" style="display:flex;align-items:center;gap:8px"><svg width="24" height="24" viewBox="0 0 160 160"><defs><clipPath id="wbh"><rect x="6" y="6" width="148" height="148" rx="20"/></clipPath></defs><rect x="2" y="2" width="156" height="156" rx="22" fill="#d4c090" stroke="#3a2208" stroke-width="3"/><rect x="6" y="6" width="148" height="148" rx="19" fill="#e8dbb8"/><rect x="6" y="6" width="148" height="88" rx="19" fill="rgba(175,210,235,0.22)" clip-path="url(#wbh)"/><g clip-path="url(#wbh)"><circle cx="40" cy="31" r="12" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><circle cx="28" cy="36" r="9.5" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><circle cx="53" cy="35" r="10" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><rect x="19" y="36" width="44" height="8" fill="#f4f0e4"/><line x1="19" y1="44" x2="63" y2="44" stroke="#3a2208" stroke-width="1"/><circle cx="122" cy="25" r="10" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><circle cx="112" cy="30" r="8" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><circle cx="133" cy="29" r="8.5" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><rect x="103" y="30" width="38" height="8" fill="#f4f0e4"/><line x1="103" y1="38" x2="141" y2="38" stroke="#3a2208" stroke-width="0.9"/></g><g clip-path="url(#wbh)"><path d="M6 122 L46 44 L86 122 Z" fill="#b4ac8c" stroke="#3a2208" stroke-width="1.8" stroke-linejoin="round"/><path d="M46 44 L38 64 L54 64 Z" fill="#f4f0e4" stroke="#3a2208" stroke-width="1.3"/><path d="M62 122 L100 20 L138 122 Z" fill="#a8a080" stroke="#3a2208" stroke-width="2.3" stroke-linejoin="round"/><path d="M100 20 L90 48 L110 48 Z" fill="#f8f4e8" stroke="#3a2208" stroke-width="1.6"/><path d="M120 122 L146 52 L154 122 Z" fill="#b8b094" stroke="#3a2208" stroke-width="1.6" stroke-linejoin="round"/></g><path d="M6 122 Q40 114 80 118 Q120 122 154 114 L154 148 Q120 154 80 152 Q40 154 6 148 Z" fill="#88a840" stroke="#3a2208" stroke-width="1.2" clip-path="url(#wbh)"/><g clip-path="url(#wbh)"><path d="M64 122 L80 96 L96 122 Z" fill="#c03828" stroke="#1a0804" stroke-width="2" stroke-linejoin="round"/><path d="M74 122 Q80 111 86 122 Z" fill="#100804"/><line x1="100" y1="126" x2="112" y2="123" stroke="#5a3010" stroke-width="2.8" stroke-linecap="round"/><line x1="102" y1="124" x2="114" y2="126" stroke="#4a2808" stroke-width="2.8" stroke-linecap="round"/><path d="M102 126 Q101 118 106 112 Q108 118 106 126 Z" fill="#e87820"/><path d="M104 126 Q103 120 106 116 Q107 121 106 126 Z" fill="#f8d040"/></g></svg> Waybound</span>'
-    + '<div class="game-meta"><span class="day-badge">Row ' + row + '/5 · ' + S.choresCompleted + ' chores</span>'
+    + '<div class="game-meta"><span class="day-badge">Day ' + (S.choresCompleted+1) + ' · ' + S.choresCompleted + ' chores</span>'
     + '<button class="reset-btn" onclick="confirmReset()">↺ Reset</button></div></div>'
     + '<div class="resources">' + resCards + '</div>'
     + '<div class="map-canvas-wrap"><canvas id="main-map" style="display:block;width:100%"></canvas></div>'
@@ -852,7 +885,7 @@ function rGame() {
     + sceneHtml
     + '<div class="card story-card"><span class="chapter-label">📖 '+hx(latest?latest.chapter:'The Expedition Begins')+'</span>'+story+'</div>'
     + hist
-    + '<button class="fab" onclick="openChore()">✨ Chore Done!</button>';
+    + '<button class="fab" onclick="openChore()">✓ Chore Done</button>';
 }
 
 function rChore() {
@@ -931,4 +964,4 @@ render();
 
 </script>
 </body>
-</html>
+</html.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}>
