@@ -258,7 +258,7 @@ async function ai(prompt) {
     },
     body: JSON.stringify({
       model:'claude-sonnet-4-20250514',
-      max_tokens:900,
+      max_tokens:1800,
       messages:[{role:'user',content:prompt}]
     })
   });
@@ -345,11 +345,12 @@ function journalSummary() {
 async function genOpening() {
   return ai(LORE + `
 
-Write the story opening. Second person. 5-6 sentences maximum.
+Write the story opening. Second person. 3-4 substantial paragraphs.
 The protagonist has just found Mara's torn journal page wedged under the floorboards of her cottage. Weeks sorting her things. The page dated four months ago — she made it past the river crossing. Her last line: "Vey knows. Move faster."
 End as they shoulder the pack, step off the porch, push through the garden gate into the jungle.
 
-Follow the writing style exactly as described above. Start with a physical sensation or action — not a description. Use fragments. Name the emotion directly. End on a single weighted line.
+Follow the writing style exactly as described above. Let the scene breathe — the weight of the cottage, the smell of Mara's things, the moment the page changes everything. Don't rush to the jungle. Earn it.
+Start with a physical sensation. Use fragments for impact. Name the emotion directly. End on a single weighted line.
 No lists. No markdown.`);
 }
 
@@ -424,15 +425,19 @@ What happened this leg: ${chStr}
 ${nearEnd ? 'PROXIMITY: The temple is close now. Ancient carved stone glimpsed through the canopy. Urgency is building.' : ''}
 ${veryNearEnd ? 'PROXIMITY: This is almost certainly the final push. Vey may already be at the temple. Everything converges here.' : ''}
 
-Write 5-7 sentences, second person. Follow the writing style exactly as described above. Requirements:
-1. Open with a physical sensation or action — body first, always.
-2. Resource changes MUST come from specific story events — never state numbers, but every change is explained by something that physically happens.
-3. Fit the node type (${chosenNode.type}): ${nodeContext.split('.')[0]}.
-4. The protagonist's physical state colors everything — wounded people move differently, think differently, see the jungle differently.
-5. Advance the Mara/Vey thread with one concrete detail: a clue, a trace, a memory, a decision.
-6. Feel continuous with the previous passage — same body, same grief, same thread.
-7. End on a single weighted line. One image. One realization. Hold it.
-No vague mood prose. No markdown. Fragments are allowed and encouraged.`;
+Write 4-5 substantial paragraphs, second person. This should feel like a self-contained chapter excerpt — not a summary, not bullet points dressed as prose. Follow the writing style exactly as described above.
+
+Each paragraph should do one thing fully before moving to the next. Don't rush. Let moments land.
+
+Requirements:
+1. Open paragraph: a physical sensation or action that drops the reader directly into the scene. Body first, always. Establish where we are and what the body feels.
+2. Middle paragraphs: let the scene unfold naturally. Resource changes come from specific story events — never state numbers, but every change is explained by something that physically happens. The node type (${chosenNode.type}) shapes what happens: ${nodeContext.split('.')[0]}. Interior monologue can cut in. Memories of Mara can surface. The jungle reacts.
+3. Throughout: the protagonist's physical state colors everything — wounded people move differently, think differently, notice different things. Let this bleed into the prose.
+4. Advance the Mara/Vey thread with one concrete detail: a clue, a trace, a memory triggered by the environment, a decision made.
+5. Feel continuous with the previous passage — same body, same grief, same emotional thread. No hard resets.
+6. Final paragraph or final line: a single weighted moment. One image. One realization. Something that lingers.
+
+No vague mood prose. No markdown. No bullet points. Fragments are allowed and encouraged when used for impact. Write it as story.`;
   return ai(prompt);
 }
 
@@ -444,7 +449,7 @@ ${journalSummary()}
 
 Last passage: "${last.slice(0,300)}"
 
-Write the ending. Second person. Follow the writing style exactly as described above. The ending MUST reflect this specific journey — their injuries, their choices, what they carried.
+Write the ending. Second person. 4-6 substantial paragraphs. Follow the writing style exactly as described above. Let it breathe — this is the payoff of the whole run. Don't summarize. Write it as lived experience. The ending MUST reflect this specific journey — their injuries, their choices, what they carried.
 
 ${isDead ?
   `The protagonist has broken down — too hurt, too hungry, too exhausted. The jungle wins this round.
