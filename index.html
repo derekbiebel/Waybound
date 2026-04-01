@@ -159,7 +159,11 @@ body.mood-temple{background:#fdf8ec}
 </head>
 <body>
 <div id="toast"></div>
-<div id="arrival-flash"></div>
+<div id="arrival-flash">
+  <div id="arrival-icon" style="font-size:5rem;margin-bottom:16px;filter:drop-shadow(0 3px 8px rgba(60,30,5,0.35))"></div>
+  <div id="arrival-label" style="color:rgba(45,20,5,0.90);font-family:Georgia,serif;font-style:italic;font-size:1.1rem;letter-spacing:0.18em;text-transform:uppercase;text-shadow:1px 1px 0 rgba(200,170,100,0.8)"></div>
+  <div style="width:60px;height:1px;background:rgba(80,45,10,0.35);margin:12px auto 0;box-shadow:0 1px 0 rgba(240,220,160,0.6)"></div>
+</div>
 <div id="app"></div>
 <script>
 
@@ -567,20 +571,20 @@ function showToast(msg) {
 function showArrival(nodeType) {
   var nt = NODE_TYPES[nodeType] || NODE_TYPES.unknown;
   var el = document.getElementById('arrival-flash');
-  if (!el) return;
+  var iconEl = document.getElementById('arrival-icon');
+  var labelEl = document.getElementById('arrival-label');
+  if (!el || !iconEl || !labelEl) return;
+  iconEl.textContent = nt.icon;
+  labelEl.textContent = nt.label;
   el.style.background = 'rgba(232,215,168,0.97)';
   el.style.backgroundImage = 'radial-gradient(ellipse at center, rgba(248,235,195,0.99) 0%, rgba(210,185,130,0.97) 100%)';
-  el.innerHTML = '<div class="arrival-icon" style="filter:drop-shadow(0 3px 8px rgba(60,30,5,0.35))">' + nt.icon + '</div>'
-    + '<div class="arrival-label" style="color:rgba(45,20,5,0.90);font-family:Georgia,serif;font-style:italic;font-size:1.1rem;letter-spacing:0.18em;text-transform:uppercase;text-shadow:1px 1px 0 rgba(200,170,100,0.8)">' + nt.label + '</div>'
-    + '<div style="width:60px;height:1px;background:rgba(80,45,10,0.35);margin:12px auto 0;box-shadow:0 1px 0 rgba(240,220,160,0.6)"></div>';
   el.classList.remove('show', 'hide');
   el.style.opacity = '0';
-  // Force reflow so Safari registers the starting opacity before transitioning
   void el.offsetHeight;
   el.classList.add('show');
   setTimeout(function() {
     el.classList.add('hide');
-    setTimeout(function() { el.classList.remove('show','hide'); el.innerHTML = ''; }, 800);
+    setTimeout(function() { el.classList.remove('show', 'hide'); }, 800);
   }, 2500);
 }
 
