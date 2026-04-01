@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Waybound">
+<meta name="theme-color" content="#f5ede0">
+<title>Waybound</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fdf6eb;--card:#fffdf7;--brown:#5a3e22;--tan2:#e8d4b4;
+  --green:#5a8f4a;--green2:#7ab86a;--green3:#d4edcc;--green4:#edf7e8;
+  --rose:#d4707a;--rose2:#f0b8bc;--rose3:#fde8ea;
+  --amber:#e8a830;--amber2:#f5d080;--amber3:#fef3d0;
+  --purple:#8b6fbf;--purple2:#c8b8e8;--purple3:#f0eaf8;
+  --sky:#5b9fd4;--sky3:#dff0fa;
+  --text:#4a3520;--text2:#8a6a48;--text3:#2a1f0f;
+  --border:#d4b88a;--border2:#e8d4b4;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden}
+#app{max-width:480px;margin:0 auto;padding:0 16px 90px}
+.fredoka{font-family:'Fredoka',sans-serif}
+.btn{display:block;width:100%;border:none;padding:16px;font-family:'Fredoka',sans-serif;font-weight:600;font-size:1rem;cursor:pointer;border-radius:8px;transition:transform .1s,box-shadow .1s}
+.btn:active{transform:translateY(2px)}
+.btn-green{background:var(--green);color:#fff;border:3px solid #3a6030;box-shadow:0 4px 0 #3a6030}
+.btn-green:active{box-shadow:0 2px 0 #3a6030}
+.btn-green:disabled{background:var(--tan2);color:var(--text2);border-color:var(--border);box-shadow:none;cursor:not-allowed;transform:none}
+.btn-amber{background:var(--amber);color:var(--brown);border:3px solid #a06010;box-shadow:0 4px 0 #a06010}
+.btn-amber:active{box-shadow:0 2px 0 #a06010}
+.btn-amber:disabled{background:var(--tan2);color:var(--text2);border-color:var(--border);box-shadow:none;cursor:not-allowed;transform:none}
+.btn-ghost{display:inline-block;width:auto;background:var(--card);border:2px solid var(--border);border-radius:6px;padding:8px 14px;color:var(--text2);font-family:'Fredoka',sans-serif;font-size:.9rem;cursor:pointer;box-shadow:0 3px 0 var(--border2)}
+.btn-ghost:active{transform:translateY(1px);box-shadow:0 1px 0 var(--border2)}
+.card{background:var(--card);border:3px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 4px 0 var(--border2)}
+/* Start */
+.start-wrap{text-align:center;padding:44px 8px 32px}
+.start-emblem{font-size:5rem;display:block;margin-bottom:6px;animation:bounce 2.5s ease-in-out infinite;filter:drop-shadow(3px 4px 0 rgba(90,60,20,.2))}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+.start-title{font-size:2.8rem;color:var(--green);text-shadow:3px 3px 0 #3a6030;margin-bottom:4px;line-height:1}
+.start-tag{font-size:.72rem;text-transform:uppercase;letter-spacing:.22em;color:#c9a87a;display:block;margin-bottom:22px}
+.start-lore{font-size:.97rem;line-height:1.85;font-style:italic;margin-bottom:16px;background:var(--amber3);border:2px solid var(--amber2);border-radius:8px;padding:16px;box-shadow:0 3px 0 var(--amber2)}
+.hint-row{display:flex;align-items:center;gap:10px;font-size:.87rem;color:var(--text2);margin-bottom:8px;background:var(--green4);border:2px solid var(--green3);border-radius:6px;padding:10px 12px;box-shadow:0 2px 0 var(--green3)}
+.hint-icon{font-size:1.2rem;flex-shrink:0}
+.start-hints{margin-bottom:26px}
+/* Game */
+.game-header-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0 8px;border-bottom:3px solid var(--border2);margin-bottom:14px;position:sticky;top:0;background:var(--bg);z-index:20}
+.game-title{font-size:1.15rem;color:var(--green)}
+.game-meta{display:flex;align-items:center;gap:8px}
+.day-badge{font-size:.72rem;color:var(--brown);background:var(--amber3);border:2px solid var(--amber2);border-radius:20px;padding:4px 10px;font-family:'Fredoka',sans-serif;box-shadow:0 2px 0 var(--amber2)}
+.reset-btn{background:none;border:2px solid var(--border);border-radius:20px;padding:4px 10px;font-family:'Fredoka',sans-serif;font-size:.7rem;color:var(--text2);cursor:pointer}
+.reset-btn:active{background:var(--rose3);border-color:var(--rose);color:var(--rose)}
+/* Resources */
+.resources{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+.res-card{background:var(--card);border:3px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;box-shadow:0 3px 0 var(--border2);transition:border-color .3s}
+.res-card.danger{border-color:var(--rose);animation:wobble .7s ease-in-out infinite alternate}
+@keyframes wobble{from{transform:rotate(-.5deg)}to{transform:rotate(.5deg)}}
+.res-icon{font-size:1.3rem;display:block;margin-bottom:4px}
+.res-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text2);margin-bottom:5px;display:block;font-family:'Fredoka',sans-serif}
+.res-track{height:8px;background:var(--tan2);border-radius:20px;overflow:hidden;margin-bottom:5px;border:1px solid var(--border)}
+.res-fill{height:100%;border-radius:20px;transition:width .7s ease}
+.res-val{font-family:'Fredoka',sans-serif;font-size:.95rem;font-weight:600;display:block}
+.res-warn{font-size:.58rem;color:var(--rose);display:block;margin-top:2px;font-family:'Fredoka',sans-serif;animation:flash 1s infinite}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.4}}
+/* Scene image */
+.scene-wrap{margin-bottom:14px;border:3px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 4px 0 var(--border2);background:var(--green4);min-height:80px;display:flex;align-items:center;justify-content:center}
+.scene-img{display:block;width:100%;height:auto;max-height:280px;object-fit:cover}
+.scene-loading{color:var(--text2);font-style:italic;font-size:.88rem;display:flex;align-items:center;gap:10px;padding:20px;font-family:'Fredoka',sans-serif}
+/* Story */
+.story-card{position:relative;overflow:hidden;padding-top:22px !important}
+.story-card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:repeating-linear-gradient(90deg,var(--green) 0,var(--green) 6px,var(--amber) 6px,var(--amber) 12px,#5b9fd4 12px,#5b9fd4 18px,var(--rose) 18px,var(--rose) 24px);opacity:.5}
+.chapter-label{font-size:.66rem;text-transform:uppercase;letter-spacing:.16em;color:var(--purple);display:block;margin-bottom:10px;font-family:'Fredoka',sans-serif}
+.story-body{font-size:.97rem;line-height:1.88;color:var(--text3)}
+.loading-row{display:flex;align-items:center;gap:10px;color:var(--text2);font-style:italic;font-size:.9rem}
+.spin{display:inline-block;animation:spin 1.2s linear infinite;font-size:1.2rem}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.fab{position:fixed;bottom:24px;right:18px;background:var(--amber);color:var(--brown);border:3px solid #a06010;border-radius:30px;padding:14px 22px;font-family:'Fredoka',sans-serif;font-weight:600;font-size:.95rem;cursor:pointer;box-shadow:0 4px 0 #a06010;z-index:50;transition:transform .1s,box-shadow .1s}
+.fab:active{transform:translateY(2px);box-shadow:0 2px 0 #a06010}
+.history-toggle{font-size:.82rem;color:var(--text2);cursor:pointer;padding:8px 0;display:block;font-family:'Fredoka',sans-serif}
+.history-passage{opacity:.55;margin-top:10px}
+/* Chore flow */
+.chore-flow-wrap{padding-top:16px}
+.back-row{margin-bottom:18px}
+.step-dots{display:flex;justify-content:center;gap:10px;margin-bottom:22px}
+.dot{width:12px;height:12px;border-radius:2px;background:var(--border2);border:2px solid var(--border);transition:all .3s}
+.dot.active{background:var(--amber);border-color:#a06010;transform:rotate(45deg)}
+.dot.done{background:var(--green);border-color:#3a6030}
+.flow-head{font-size:1.2rem;color:var(--brown);text-align:center;margin-bottom:5px;display:block}
+.flow-sub{text-align:center;font-size:.87rem;color:var(--text2);font-style:italic;margin-bottom:20px;display:block}
+.section-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.16em;color:var(--purple);display:block;margin-bottom:12px;font-family:'Fredoka',sans-serif}
+.res-mini-bar{display:flex;justify-content:center;gap:18px;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:8px 16px;margin-bottom:14px;box-shadow:0 2px 0 var(--border2)}
+.res-mini-item{display:flex;align-items:center;gap:6px;font-family:'Fredoka',sans-serif;font-size:.88rem;font-weight:600}
+.chore-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.chore-btn{background:var(--card);border:3px solid var(--border);border-radius:8px;padding:14px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;cursor:pointer;text-align:center;line-height:1.4;box-shadow:0 3px 0 var(--border2);transition:all .15s}
+.chore-btn:active{transform:translateY(1px);box-shadow:0 1px 0 var(--border2)}
+.chore-btn.selected{background:var(--green4);border-color:var(--green);box-shadow:0 3px 0 var(--green3);color:var(--brown)}
+.chore-icon-big{font-size:1.8rem;display:block;margin-bottom:5px}
+.chore-diff{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;margin-top:5px;display:block;font-family:'Fredoka',sans-serif}
+.diff-hard{color:var(--rose)}.diff-medium{color:var(--purple)}.diff-easy{color:var(--green)}
+/* Path node cards */
+.path-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.path-card{background:var(--card);border:3px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;box-shadow:0 3px 0 var(--border2);transition:all .15s;display:flex;align-items:flex-start;gap:12px}
+.path-card:active{transform:translateY(1px);box-shadow:0 1px 0 var(--border2)}
+.path-card.selected{box-shadow:0 3px 0 var(--border)}
+.path-node-icon{font-size:2rem;flex-shrink:0;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid currentColor;font-size:1.4rem}
+.path-card-body{flex:1}
+.path-node-type{font-family:'Fredoka',sans-serif;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.path-node-desc{font-size:.9rem;line-height:1.55;color:var(--text3)}
+.paths-loading{text-align:center;padding:36px 0;color:var(--text2);font-style:italic}
+/* Map canvas */
+.map-canvas-wrap{background:var(--card);border:3px solid var(--border);border-radius:10px;margin-bottom:14px;box-shadow:0 4px 0 var(--border2);overflow:hidden}
+.map-canvas-wrap canvas{display:block;width:100%}
+/* Map legend */
+.map-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;justify-content:center}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:.72rem;font-family:'Fredoka',sans-serif;color:var(--text2);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:3px 10px}
+/* End */
+.end-wrap{text-align:center;padding:48px 12px 32px}
+.end-emblem{font-size:5rem;display:block;margin-bottom:18px;animation:bounce 2s ease-in-out infinite}
+.end-title{font-size:1.6rem;margin-bottom:16px;line-height:1.3}
+.end-title.victory{color:var(--green);text-shadow:2px 2px 0 #3a6030}
+.end-title.defeat{color:var(--rose)}
+.end-story{font-size:.97rem;line-height:1.88;font-style:italic;margin-bottom:20px;background:var(--amber3);border:2px solid var(--amber2);border-radius:8px;padding:16px;box-shadow:0 3px 0 var(--amber2)}
+.end-stats{background:var(--green4);border:2px solid var(--green3);border-radius:8px;padding:14px 16px;font-size:.88rem;color:var(--text2);margin-bottom:24px;line-height:1.8;box-shadow:0 3px 0 var(--green3)}
+#toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--green);color:#fff;border:3px solid #3a6030;border-radius:8px;padding:10px 22px;font-size:.9rem;font-family:'Fredoka',sans-serif;font-weight:600;z-index:200;transition:transform .3s ease;white-space:nowrap;pointer-events:none;box-shadow:0 4px 0 #3a6030}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.setup-wrap{text-align:center;padding:48px 16px 32px;max-width:400px;margin:0 auto}
+.setup-icon{font-size:3.5rem;display:block;margin-bottom:16px;animation:bounce 2.5s ease-in-out infinite}
+.setup-title{font-size:1.8rem;color:var(--green);text-shadow:2px 2px 0 #3a6030;margin-bottom:6px}
+.setup-sub{font-size:.85rem;color:var(--text2);margin-bottom:24px;display:block;line-height:1.6}
+.setup-card{background:var(--card);border:3px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 4px 0 var(--border2);text-align:left}
+.setup-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text2);font-family:'Fredoka',sans-serif;display:block;margin-bottom:8px}
+.setup-input{width:100%;border:2px solid var(--border);border-radius:6px;padding:12px;font-family:'Nunito',sans-serif;font-size:.9rem;color:var(--text);background:var(--bg);outline:none;box-sizing:border-box}
+.setup-input:focus{border-color:var(--green)}
+.setup-hint{font-size:.78rem;color:var(--text2);margin-top:8px;display:block;line-height:1.5}
+.setup-hint a{color:var(--green)}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="app"></div>
+<script>
+
+var API_KEY = localStorage.getItem('waybound_api_key') || '';
+const SAVE_KEY = 'waybound_v1';
+const WIN_AT = 14;
+const MAX = 100;
+const CHORES = [{"id": "laundry_wash", "name": "Laundry Wash", "icon": "🫧", "diff": "easy", "picks": 1}, {"id": "laundry_fold", "name": "Laundry Fold", "icon": "👕", "diff": "medium", "picks": 1}, {"id": "dishes", "name": "Dishes & Kitchen", "icon": "🍽️", "diff": "medium", "picks": 1}, {"id": "vacuuming", "name": "Vacuum & Floors", "icon": "🧹", "diff": "medium", "picks": 1}, {"id": "bathrooms", "name": "Bathrooms", "icon": "🚿", "diff": "hard", "picks": 2}, {"id": "trash", "name": "Take Out Trash", "icon": "🗑️", "diff": "easy", "picks": 1}, {"id": "yard", "name": "Yard Work", "icon": "🌿", "diff": "hard", "picks": 2}, {"id": "norm_walk", "name": "Norm Walk", "icon": "🐕", "diff": "medium", "picks": 1}];
+const RES = [{"id": "gold", "icon": "🪙", "name": "Gold", "color": "#c88010", "bar": "linear-gradient(90deg,#e8a830,#f5d080)"}, {"id": "health", "icon": "❤️", "name": "Health", "color": "#c04050", "bar": "linear-gradient(90deg,#d4707a,#f0b8bc)"}, {"id": "food", "icon": "🍓", "name": "Food", "color": "#4a8030", "bar": "linear-gradient(90deg,#5a8f4a,#9acf7a)"}];
+const NODES = [{"id": 0, "row": 0, "col": 1, "type": "start"}, {"id": 1, "row": 1, "col": 0, "type": "encounter"}, {"id": 2, "row": 1, "col": 2, "type": "rest"}, {"id": 3, "row": 2, "col": 0, "type": "unknown"}, {"id": 4, "row": 2, "col": 1, "type": "event"}, {"id": 5, "row": 2, "col": 3, "type": "elite"}, {"id": 6, "row": 3, "col": 0, "type": "rest"}, {"id": 7, "row": 3, "col": 1, "type": "encounter"}, {"id": 8, "row": 3, "col": 2, "type": "unknown"}, {"id": 9, "row": 3, "col": 3, "type": "event"}, {"id": 10, "row": 4, "col": 0, "type": "elite"}, {"id": 11, "row": 4, "col": 1, "type": "unknown"}, {"id": 12, "row": 4, "col": 2, "type": "rest"}, {"id": 13, "row": 4, "col": 3, "type": "encounter"}, {"id": 14, "row": 5, "col": 1, "type": "temple"}];
+const CONNECTIONS = [[0, 1], [0, 2], [1, 3], [1, 4], [2, 4], [2, 5], [3, 6], [3, 7], [4, 7], [4, 8], [5, 8], [5, 9], [6, 10], [6, 11], [7, 11], [7, 12], [8, 12], [8, 13], [9, 13], [10, 14], [11, 14], [12, 14], [13, 14]];
+const NODE_TYPES = {"start": {"icon": "🏡", "label": "Home", "color": "#5a8f4a", "bg": "#edf7e8"}, "encounter": {"icon": "⚔️", "label": "Encounter", "color": "#c04050", "bg": "#fde8ea"}, "rest": {"icon": "🏕️", "label": "Rest Stop", "color": "#5b9fd4", "bg": "#dff0fa"}, "unknown": {"icon": "❓", "label": "Unknown", "color": "#8b6fbf", "bg": "#f0eaf8"}, "elite": {"icon": "💀", "label": "Elite", "color": "#7a1a1a", "bg": "#fde8ea"}, "event": {"icon": "📜", "label": "Event", "color": "#e8a830", "bg": "#fef3d0"}, "temple": {"icon": "🏛️", "label": "Temple", "color": "#e8a830", "bg": "#fef3d0"}};
+const NODE_DELTAS = {"encounter": {"goldDelta": 15, "healthDelta": -18, "foodDelta": -8}, "rest": {"goldDelta": 0, "healthDelta": 20, "foodDelta": -20}, "unknown": {"goldDelta": 8, "healthDelta": -8, "foodDelta": -10}, "elite": {"goldDelta": 28, "healthDelta": -28, "foodDelta": -6}, "event": {"goldDelta": 5, "healthDelta": 5, "foodDelta": -8}, "start": {"goldDelta": 0, "healthDelta": 0, "foodDelta": 0}, "temple": {"goldDelta": 0, "healthDelta": 0, "foodDelta": 0}};
+const NODE_PROMPTS = {"encounter": "This is an ENCOUNTER node — dangerous, high stakes. The protagonist faces a direct physical challenge: a territorial animal, treacherous terrain, Vey's guards, a sudden storm. High health cost likely. Gold reward possible if they overcome it.", "rest": "This is a REST node — a moment to recover. The protagonist finds shelter, tends wounds, eats a proper meal. Health recovers but food is consumed. Slower, safer, personal.", "unknown": "This is an UNKNOWN node — anything could happen. The protagonist investigates something unexpected: strange sounds, odd markings, an abandoned campsite. Outcome genuinely unpredictable.", "elite": "This is an ELITE node — very dangerous, very rewarding. The protagonist faces something truly threatening: a large predator, Vey himself, a near-fatal trap. Serious health cost but significant gold or information reward.", "event": "This is an EVENT node — a story moment tied to Mara or Vey. The protagonist discovers a clue, a memory, a choice. This must advance the central mystery meaningfully.", "temple": "This is the TEMPLE — the journey ends here."};
+const CHAPTERS = ["The Journal Page", "The First Steps", "Deeper In", "The River", "Old Paths", "What She Left", "Signs of Vey", "The Canopy", "Almost There", "Ancient Stone", "The Temple Gate"];
+const NUM_ROWS = 6;
+const COLS_PER_ROW = 4;
+
+const LORE = `STORY CONTEXT — weave into every passage:
+PROTAGONIST: You — capable, grieving. Came to pack up your sister Mara's cottage. Found her torn journal page under the floorboards instead.
+MARA: Your younger sister. Botanist. Vanished six months ago chasing the Temple of Aurathen. Her last entry: "Vey knows. Move faster."
+CASTELLAN VEY: Surveyor for Herath Logging Co. Charming, experienced, three days ahead of you. Wants the map inside the temple — proves the valley rivers are navigable, worth logging. He would bury Mara's journal without a thought.
+THE TEMPLE: Contains Mara's final journal and a hand-drawn map of the valley's river system. The map determines whether Herath Logging destroys the valley.
+THE REAL STAKES: What happened to Mara. Beating Vey. What you do with what she found.
+TONE: Personal. Oregon Trail stakes inside a Stardew Valley world. Beautiful setting, real consequences.`;
+
+function fresh() {
+  return {
+    screen: localStorage.getItem('waybound_api_key') ? 'start' : 'setup', resources:{gold:60,health:70,food:65},
+    nodePos:0, visitedNodes:[0], passages:[],
+    choresCompleted:0, endingText:'', endLoading:false,
+    choreStep:0, selectedChore:null, selectedPath:null,
+    pathOptions:[], pathsLoading:false, storyLoading:false,
+    sceneImageUrl:'', sceneImageLoading:false
+  };
+}
+
+var S = (function() {
+  try { var d = localStorage.getItem(SAVE_KEY); return d ? JSON.parse(d) : fresh(); }
+  catch(e) { return fresh(); }
+})();
+
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch(e) {} }
+
+async function ai(prompt) {
+  var r = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':API_KEY,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:900,
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  if (!r.ok) throw new Error(r.status);
+  return (await r.json()).content[0].text;
+}
+
+function currentNode() { return NODES[S.nodePos]; }
+
+function getNextNodes() {
+  var cur = S.nodePos;
+  return CONNECTIONS
+    .filter(function(c) { return c[0] === cur; })
+    .map(function(c) { return NODES[c[1]]; });
+}
+
+function getProgress() {
+  var cur = currentNode();
+  return cur ? cur.row : 0;
+}
+
+// ── AI PROMPTS ─────────────────────────────────────────────────────────────────
+
+async function genOpening() {
+  return ai(LORE + `
+
+Write the story opening. 5-6 sentences, second person.
+The protagonist has just found Mara's torn journal page wedged under the floorboards of her cottage. They have been here weeks sorting her things. The page is dated four months ago — she made it past the river crossing. Her last line: "Vey knows. Move faster."
+End as they shoulder a pack, step off the porch into morning light, and push through the garden gate into the jungle. Driven. Frightened. Aware Vey already has a head start.
+Specific and personal. No lists. No markdown.`);
+}
+
+async function genPathDescriptions(nextNodes) {
+  var cur = currentNode();
+  var last = S.passages.length ? S.passages[S.passages.length-1].text : '';
+  var low = Object.entries(S.resources).filter(function(e) { return e[1] <= 30; }).map(function(e) { return e[0]; });
+  var nodeDescs = nextNodes.map(function(n) {
+    return NODE_TYPES[n.type].icon + ' ' + NODE_TYPES[n.type].label + ' (' + n.type + ')';
+  }).join(', ');
+
+  var prompt = LORE + `
+
+Current location: row ${cur.row} of 5, node type: ${cur.type}
+Last passage: "${last.slice(0,200)}"
+Resources: Gold ${S.resources.gold}, Health ${S.resources.health}, Food ${S.resources.food} /100.
+${low.length ? 'CRITICAL: ' + low.join(' and ') + ' dangerously low.' : ''}
+
+The player must choose between these path options: ${nodeDescs}
+
+For each path option, write a vivid 20-30 word description of what awaits down that route — evocative, atmospheric, enough to make a meaningful choice.
+The description should implicitly signal the risk/reward of that node type:
+- Encounter: danger, confrontation, something blocking the way
+- Rest: shelter, quiet, a chance to breathe
+- Unknown: mystery, strangeness, something that doesn't add up
+- Elite: serious threat or major obstacle, but something clearly valuable nearby
+- Event: something personal, a trace of Mara or Vey, a story moment
+
+Reply ONLY with raw JSON array, no markdown:
+[{"nodeId":${nextNodes[0].id},"desc":"..."},{"nodeId":${nextNodes[1] ? nextNodes[1].id : nextNodes[0].id},"desc":"..."}${nextNodes[2] ? ',{"nodeId":' + nextNodes[2].id + ',"desc":"..."}' : ''}]`;
+
+  var raw = await ai(prompt);
+  return JSON.parse(raw.replace(/```json|```/g, '').trim());
+}
+
+async function genPassage(chosenNode) {
+  var cur = currentNode();
+  var low = Object.entries(S.resources).filter(function(e) { return e[1] <= 30; }).map(function(e) { return e[0]; });
+  var nearEnd = chosenNode.row >= 4;
+  var last = S.passages.length ? S.passages[S.passages.length-1].text : '';
+  var deltas = NODE_DELTAS[chosenNode.type] || {};
+  var ch = [];
+  if (deltas.goldDelta > 0) ch.push('found ' + deltas.goldDelta + ' gold');
+  if (deltas.goldDelta < 0) ch.push('lost ' + Math.abs(deltas.goldDelta) + ' gold');
+  if (deltas.healthDelta > 0) ch.push('recovered ' + deltas.healthDelta + ' health');
+  if (deltas.healthDelta < 0) ch.push('took ' + Math.abs(deltas.healthDelta) + ' damage');
+  if (deltas.foodDelta > 0) ch.push('found ' + deltas.foodDelta + ' food');
+  if (deltas.foodDelta < 0) ch.push('consumed ' + Math.abs(deltas.foodDelta) + ' food');
+  var chStr = ch.length ? ch.join(', ') : 'no resource change';
+  var nodeContext = NODE_PROMPTS[chosenNode.type] || '';
+
+  var prompt = LORE + `
+
+${nodeContext}
+
+Previous passage: "${last.slice(0,200)}"
+Resource changes this leg: ${chStr}
+Current resources after: Gold ${S.resources.gold}, Health ${S.resources.health}, Food ${S.resources.food} /100.
+${low.length ? 'CRITICAL: ' + low.join(' and ') + ' dangerously low. Make this feel urgent.' : ''}
+${nearEnd ? 'The temple is close. Ancient carved stone visible through the canopy. Vey may already be inside.' : ''}
+
+Write 5-7 punchy second-person sentences.
+1. The resource changes MUST come from specific vivid story events — a badger bite, discovering Vey's supply cache, eating trail rations, finding shelter. Never mention the numbers directly, but the event must explain them.
+2. This passage must fit the node type (${chosenNode.type}): ${nodeContext.split('.')[0]}.
+3. Advance the Mara/Vey storyline with at least one clue, trace, or decision.
+4. End with one sharp sensory detail of where you are now.
+No vague mood prose. Every sentence earns its place. No markdown.`;
+  return ai(prompt);
+}
+
+async function genEnding(isDead) {
+  var last = S.passages.length ? S.passages[S.passages.length-1].text : '';
+  var prompt = LORE + `
+
+Final resources: Gold ${S.resources.gold}, Health ${S.resources.health}, Food ${S.resources.food}. Chores: ${S.choresCompleted}. Nodes visited: ${S.visitedNodes.length}.
+Last passage: "${last.slice(0,280)}"
+
+Write the ending. 6-8 sentences, second person.
+${isDead ?
+  `The protagonist has broken down — too hurt, too hungry, too exhausted. The jungle wins this round. Write the grief honestly: not knowing what happened to Mara, the fear Vey reaches the temple first. End with one specific moment of resolve to return.` :
+  `The protagonist has reached the Temple of Aurathen. Write the full payoff:
+- The temple interior: what it looks like, smells like
+- Finding Mara's final journal and what it reveals about what happened to her
+- The map: she hid it somewhere Vey would never look
+- The choice about what to do with it
+Make it genuinely moving. This was always a story about a sibling.`}
+No markdown.`;
+  return ai(prompt);
+}
+
+async function genSceneImage(passageText, nodeType) {
+  try {
+    var imgPrompt = await ai(`Write a 15-20 word Stable Diffusion image prompt for this jungle adventure scene. Style: painterly, Studio Ghibli, warm colors. Environment only, no people, no text. Just the prompt.
+Scene: "${passageText.slice(0,200)}"
+Node type: ${nodeType}`);
+    var clean = imgPrompt.trim().replace(/\s+/g, ' ').slice(0, 180);
+    var submitRes = await fetch('https://stablehorde.net/api/v2/generate/async', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':'0000000000'},
+      body:JSON.stringify({
+        prompt: clean + ' ### ugly, blurry, people, text, watermark, nsfw',
+        params:{width:512,height:320,steps:25,n:1,sampler_name:'k_euler_a'},
+        models:['stable_diffusion'],r2:true,nsfw:false,censor_nsfw:true
+      })
+    });
+    var sub = await submitRes.json();
+    if (!sub.id) return '';
+    for (var i = 0; i < 20; i++) {
+      await new Promise(function(r) { setTimeout(r, 3000); });
+      var chk = await fetch('https://stablehorde.net/api/v2/generate/check/' + sub.id).then(function(r) { return r.json(); });
+      if (chk.faulted) return '';
+      if (chk.done) {
+        var st = await fetch('https://stablehorde.net/api/v2/generate/status/' + sub.id).then(function(r) { return r.json(); });
+        return (st.generations && st.generations[0]) ? st.generations[0].img : '';
+      }
+    }
+    return '';
+  } catch(e) { return ''; }
+}
+
+// ── ACTIONS ────────────────────────────────────────────────────────────────────
+
+async function startGame() {
+  S.screen = 'game'; S.storyLoading = true; save(); render();
+  try {
+    var t = await genOpening();
+    S.passages = [{chapter:'The Journal Page', text:t}];
+  } catch(e) {
+    S.passages = [{chapter:'The Journal Page', text:'You find Mara\'s journal page on a Tuesday morning, wedged under the third floorboard from the window — the loose one she never fixed. The ink is smeared on one side, sharp on the other. She made it past the river crossing. She found something. And someone was behind her. You fold the page into your breast pocket, pull on your boots, and walk out of the cottage without locking the door.'}];
+  }
+  S.storyLoading = false; save(); render();
+  var op = S.passages[0];
+  if (op) genSceneImage(op.text, 'start').then(function(url) { if (url) { S.sceneImageUrl = url; save(); if (S.screen === 'game') render(); } });
+}
+
+function confirmReset() {
+  if (confirm('Start a new expedition? Current run will be lost.')) {
+    localStorage.removeItem(SAVE_KEY); S = fresh(); render();
+  }
+}
+
+function openChore() {
+  S.screen = 'chore'; S.choreStep = 0; S.selectedChore = null;
+  S.selectedPath = null; S.pathOptions = []; save(); render();
+}
+
+function closeChore() { S.screen = 'game'; save(); render(); }
+
+function pickChore(idx) { S.selectedChore = CHORES[parseInt(idx)]; render(); }
+
+function goNext() {
+  S.choreStep = 1; S.pathsLoading = true; render();
+  var nextNodes = getNextNodes();
+  genPathDescriptions(nextNodes).then(function(descs) {
+    S.pathOptions = descs.map(function(d) {
+      var node = NODES.find(function(n) { return n.id === d.nodeId; });
+      return { nodeId: d.nodeId, type: node ? node.type : 'unknown', desc: d.desc };
+    });
+    S.pathsLoading = false; save(); render();
+  }).catch(function() {
+    var nextNodes2 = getNextNodes();
+    S.pathOptions = nextNodes2.map(function(n) {
+      return { nodeId: n.id, type: n.type, desc: NODE_TYPES[n.type].label + ' — the path ahead.' };
+    });
+    S.pathsLoading = false; save(); render();
+  });
+}
+
+function pickPath(i) { S.selectedPath = parseInt(i); render(); }
+
+async function confirmChore() {
+  var chosen = S.pathOptions[S.selectedPath];
+  var chosenNode = NODES.find(function(n) { return n.id === chosen.nodeId; });
+  var deltas = NODE_DELTAS[chosenNode.type] || {};
+  S.resources.gold   = Math.max(0, Math.min(MAX, S.resources.gold   + (deltas.goldDelta   || 0)));
+  S.resources.health = Math.max(0, Math.min(MAX, S.resources.health + (deltas.healthDelta || 0)));
+  S.resources.food   = Math.max(0, Math.min(MAX, S.resources.food   + (deltas.foodDelta   || 0)));
+  S.nodePos = chosenNode.id;
+  if (S.visitedNodes.indexOf(S.nodePos) < 0) S.visitedNodes.push(S.nodePos);
+  var progressGain = (S.selectedChore && S.selectedChore.diff === 'hard') ? 2 : 1;
+  S.choresCompleted++;
+  var dead = Object.values(S.resources).some(function(v) { return v <= 0; });
+  var won = chosenNode.type === 'temple';
+  S.screen = 'game'; S.storyLoading = true; S.sceneImageUrl = ''; S.sceneImageLoading = true;
+  S.choreStep = 0; S.selectedChore = null; S.selectedPath = null; S.pathOptions = [];
+  save(); render();
+  try {
+    var t = await genPassage(chosenNode);
+    S.passages.push({ chapter: CHAPTERS[Math.min(S.passages.length, CHAPTERS.length-1)], text: t });
+  } catch(e) {
+    S.passages.push({ chapter: CHAPTERS[Math.min(S.passages.length, CHAPTERS.length-1)], text: 'You push on through the jungle.' });
+  }
+  S.storyLoading = false;
+  if (dead || won) {
+    S.sceneImageLoading = false; S.screen = 'end'; S.endLoading = true; save(); render();
+    try { S.endingText = await genEnding(dead); }
+    catch(e) { S.endingText = dead ? 'The jungle has you this time. But you will come back.' : 'The temple doors open. Mara\'s journal is on the altar, open to the last page.'; }
+    S.endLoading = false; save(); render();
+  } else {
+    var lp = S.passages[S.passages.length-1];
+    if (lp) genSceneImage(lp.text, chosenNode.type).then(function(url) {
+      S.sceneImageUrl = url || ''; S.sceneImageLoading = false;
+      save(); if (S.screen === 'game') render();
+    });
+    else S.sceneImageLoading = false;
+    save(); render();
+    showToast('Chore done. The path opens.');
+  }
+}
+
+function restart() { localStorage.removeItem(SAVE_KEY); S = fresh(); render(); }
+
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2800);
+}
+
+function hx(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── MAP DRAWING ─────────────────────────────────────────────────────────────────
+var mapRaf = null;
+
+function drawSpireMap(canvasId, highlightNextNodes) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  var W = canvas.offsetWidth;
+  if (!W || W < 10) { requestAnimationFrame(function() { drawSpireMap(canvasId, highlightNextNodes); }); return; }
+  var rowH = 82, H = NUM_ROWS * rowH + 48;
+  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+  var ctx = canvas.getContext('2d');
+  var now = Date.now();
+
+  // ── PARCHMENT BACKGROUND ────────────────────────────────────────────────────
+  // Aged parchment base
+  var parchment = ctx.createLinearGradient(0, 0, W, H);
+  parchment.addColorStop(0,   '#e8dbb8');
+  parchment.addColorStop(0.3, '#ddd0a8');
+  parchment.addColorStop(0.6, '#d4c898');
+  parchment.addColorStop(1,   '#cabe90');
+  ctx.fillStyle = parchment;
+  ctx.fillRect(0, 0, W, H);
+
+  // Parchment noise / aging spots
+  ctx.save();
+  for (var i = 0; i < 180; i++) {
+    var px = Math.random()*W, py = Math.random()*H;
+    var pr = Math.random()*18+2;
+    var pg = ctx.createRadialGradient(px,py,0,px,py,pr);
+    var dark = Math.random()>0.5;
+    pg.addColorStop(0, dark?'rgba(100,70,20,0.06)':'rgba(255,240,190,0.08)');
+    pg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = pg;
+    ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+
+  // Vignette - darker edges like old parchment
+  var vig = ctx.createRadialGradient(W/2,H/2,H*0.15,W/2,H/2,H*0.9);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(60,35,5,0.32)');
+  ctx.fillStyle = vig; ctx.fillRect(0,0,W,H);
+
+  // Ink stain hints
+  ctx.save(); ctx.globalAlpha = 0.04;
+  [[0.12,0.15],[0.88,0.25],[0.45,0.08],[0.7,0.88],[0.2,0.75]].forEach(function(p){
+    var ig = ctx.createRadialGradient(p[0]*W,p[1]*H,0,p[0]*W,p[1]*H,W*0.08);
+    ig.addColorStop(0,'rgba(30,10,2,0.5)'); ig.addColorStop(1,'rgba(30,10,2,0)');
+    ctx.fillStyle=ig; ctx.beginPath(); ctx.arc(p[0]*W,p[1]*H,W*0.08,0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+
+  // ── INK-LINE ILLUSTRATED TREES ─────────────────────────────────────────────
+  // Cartographic tree style: ink outline with hatching fill
+  function drawCartographicTree(x, y, s) {
+    ctx.save();
+    var r = 10*s;
+    // Shadow blob (no outline)
+    ctx.beginPath(); ctx.ellipse(x+2, y+3, r*0.8, r*0.5, 0, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(60,35,5,0.12)'; ctx.fill();
+
+    // Tree canopy clusters - 3 overlapping circles, ink style
+    var clusters = [[-0.45*r,-0.3*r,r*0.72],[0.42*r,-0.25*r,r*0.68],[0,-(r*0.6),r*0.78],[0,r*0.05,r*0.62]];
+    // Fill first (lighter green)
+    clusters.forEach(function(c){
+      ctx.beginPath(); ctx.arc(x+c[0],y+c[1],c[2],0,Math.PI*2);
+      ctx.fillStyle = 'rgba(82,112,48,0.82)'; ctx.fill();
+    });
+    // Ink outlines
+    ctx.lineWidth = 0.9*s; ctx.strokeStyle = 'rgba(30,22,8,0.85)'; ctx.lineJoin = 'round';
+    clusters.forEach(function(c){
+      ctx.beginPath(); ctx.arc(x+c[0],y+c[1],c[2],0,Math.PI*2); ctx.stroke();
+    });
+    // Interior hatching lines for texture
+    ctx.save(); ctx.clip();
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = 'rgba(20,40,10,1)'; ctx.lineWidth = 0.7*s;
+    for (var hi = -r*2; hi < r*2; hi += r*0.35) {
+      ctx.beginPath(); ctx.moveTo(x-r*1.5,y+hi); ctx.lineTo(x+r*1.5,y+hi+r*0.5); ctx.stroke();
+    }
+    ctx.restore();
+    // Highlight dots
+    ctx.globalAlpha = 0.35; ctx.fillStyle = 'rgba(160,200,80,1)';
+    [[-r*0.2,-r*0.7],[r*0.3,-r*0.5]].forEach(function(d){
+      ctx.beginPath(); ctx.arc(x+d[0],y+d[1],r*0.2,0,Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  // Draw many trees across the parchment - denser at top (deeper jungle)
+  // [x%, y%, scale] — trees are everywhere like a real illustrated map
+  var mapTrees = [
+    // Border trees - dense framing
+    [0.04,0.96,1.1],[0.12,0.94,0.9],[0.96,0.95,1.0],[0.88,0.93,0.85],
+    [0.03,0.78,1.2],[0.97,0.76,1.15],[0.04,0.62,1.1],[0.96,0.60,1.05],
+    [0.03,0.44,1.3],[0.97,0.42,1.25],[0.04,0.28,1.35],[0.96,0.26,1.3],
+    [0.03,0.12,1.4],[0.97,0.10,1.35],[0.10,0.04,1.2],[0.90,0.03,1.15],
+    // Interior trees - scattered like a real map
+    [0.18,0.92,0.8],[0.28,0.90,0.75],[0.72,0.91,0.8],[0.82,0.90,0.75],
+    [0.15,0.75,0.9],[0.82,0.72,0.88],[0.20,0.60,0.95],[0.80,0.58,0.9],
+    [0.15,0.42,1.0],[0.82,0.40,1.0],[0.18,0.25,1.1],[0.80,0.23,1.05],
+    [0.22,0.10,1.0],[0.75,0.09,0.95],[0.55,0.06,0.85],[0.40,0.08,0.8],
+    // Deeper interior - bottom half lighter
+    [0.32,0.85,0.65],[0.50,0.88,0.7],[0.60,0.86,0.68],[0.42,0.72,0.7],
+    [0.60,0.70,0.72],[0.35,0.58,0.78],[0.62,0.55,0.75],
+    // Top half denser jungle
+    [0.28,0.35,0.9],[0.65,0.32,0.88],[0.35,0.20,0.95],[0.62,0.18,0.92],
+    [0.42,0.30,0.82],[0.55,0.28,0.85],[0.48,0.15,0.9],[0.52,0.42,0.75],
+  ];
+  ctx.save();
+  mapTrees.forEach(function(t) {
+    // Trees get slightly more opaque toward top (denser jungle)
+    var yPct = t[1];
+    ctx.globalAlpha = 0.65 + (1-yPct)*0.25;
+    drawCartographicTree(t[0]*W, t[1]*H, t[2]);
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // ── TERRAIN HATCHING (hills/rough terrain) ─────────────────────────────────
+  ctx.save(); ctx.globalAlpha = 0.13; ctx.strokeStyle = 'rgba(80,45,10,1)'; ctx.lineWidth = 0.7;
+  // Left hill area
+  function drawHill(hx, hy, hw, hh) {
+    for (var hl = 0; hl < 8; hl++) {
+      var t2 = hl/7;
+      var lineY = hy + hh*0.2 + t2*hh*0.7;
+      var lineW = hw*(0.5 + t2*0.5);
+      ctx.beginPath(); ctx.moveTo(hx - lineW/2, lineY + t2*3);
+      ctx.quadraticCurveTo(hx, lineY - hh*0.05*(1-t2), hx + lineW/2, lineY + t2*3);
+      ctx.stroke();
+    }
+  }
+  drawHill(W*0.12, H*0.55, W*0.14, H*0.08);
+  drawHill(W*0.88, H*0.53, W*0.12, H*0.07);
+  drawHill(W*0.15, H*0.30, W*0.13, H*0.09);
+  drawHill(W*0.86, H*0.28, W*0.14, H*0.08);
+  ctx.restore();
+
+  // ── RIVER (ink-outlined, like reference maps) ────────────────────────────────
+  var riverY = H - 30 - 2.5*rowH;
+  ctx.save();
+  // River bank - ink outline
+  ctx.beginPath();
+  ctx.moveTo(0, riverY - 10);
+  ctx.bezierCurveTo(W*0.2,riverY-16, W*0.4,riverY-4, W*0.58,riverY-12);
+  ctx.bezierCurveTo(W*0.72,riverY-18, W*0.86,riverY-8, W,riverY-14);
+  ctx.lineTo(W, riverY+10);
+  ctx.bezierCurveTo(W*0.86,riverY+6, W*0.72,riverY+14, W*0.58,riverY+8);
+  ctx.bezierCurveTo(W*0.4,riverY+2, W*0.2,riverY+12, 0, riverY+8);
+  ctx.closePath();
+  // Water fill - blue-grey like cartographic water
+  ctx.fillStyle = 'rgba(140,180,210,0.65)'; ctx.fill();
+  // Ink outline
+  ctx.strokeStyle = 'rgba(30,20,8,0.7)'; ctx.lineWidth = 1.2; ctx.stroke();
+  // Water line hatching (horizontal strokes)
+  ctx.globalAlpha = 0.3; ctx.strokeStyle = 'rgba(80,120,170,0.9)'; ctx.lineWidth = 0.8;
+  for (var wl = -8; wl <= 8; wl += 4) {
+    ctx.beginPath();
+    ctx.moveTo(W*0.05, riverY + wl);
+    ctx.bezierCurveTo(W*0.3,riverY+wl-3, W*0.6,riverY+wl+4, W*0.95,riverY+wl-2);
+    ctx.stroke();
+  }
+  // River label
+  ctx.globalAlpha = 0.55; ctx.fillStyle = 'rgba(30,20,8,0.8)';
+  ctx.font = 'italic 8px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('~ River Aurathen ~', W*0.5, riverY);
+  ctx.globalAlpha = 1; ctx.restore();
+
+  // ── CARTOGRAPHIC BORDER ──────────────────────────────────────────────────────
+  ctx.save();
+  // Double ink border
+  ctx.strokeStyle = 'rgba(30,20,8,0.45)'; ctx.lineWidth = 3;
+  ctx.strokeRect(4, 4, W-8, H-8);
+  ctx.strokeStyle = 'rgba(30,20,8,0.2)'; ctx.lineWidth = 1;
+  ctx.strokeRect(7, 7, W-14, H-14);
+  ctx.restore();
+
+  // ── ZONE LABELS (cartographic serif text) ────────────────────────────────────
+  var zoneLabels = [
+    {row:1, label:'The Meadow'},
+    {row:2, label:'River Crossing'},
+    {row:3, label:'Deep Jungle'},
+    {row:4, label:'Ancient Ruins'},
+    {row:5, label:'Temple'},
+  ];
+  zoneLabels.forEach(function(z) {
+    var zy = H - 30 - z.row*rowH + rowH*0.5;
+    ctx.save();
+    ctx.font = 'italic 7.5px Georgia, serif';
+    ctx.fillStyle = 'rgba(60,35,8,0.4)';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(z.label, 8, zy);
+    // Faint ruling line
+    ctx.globalAlpha = 0.08; ctx.strokeStyle = 'rgba(60,35,8,1)'; ctx.lineWidth = 0.8;
+    ctx.setLineDash([4,12]); ctx.beginPath(); ctx.moveTo(0,zy+rowH/2); ctx.lineTo(W,zy+rowH/2); ctx.stroke();
+    ctx.restore();
+  });
+
+  // ── NODE POSITIONS ──────────────────────────────────────────────────────────
+  function nodePos(node) {
+    var margin = W*0.14, usable = W - margin*2;
+    return { x: margin + (node.col/3)*usable, y: H - 30 - node.row*rowH };
+  }
+
+  // ── CONNECTIONS (hand-drawn path style) ────────────────────────────────────
+  CONNECTIONS.forEach(function(c) {
+    var a = nodePos(NODES[c[0]]), b = nodePos(NODES[c[1]]);
+    var bothVisited = S.visitedNodes.indexOf(c[0])>=0 && S.visitedNodes.indexOf(c[1])>=0;
+    var isNext = highlightNextNodes && highlightNextNodes.indexOf(c[1])>=0 && c[0]===S.nodePos;
+    var mx = (a.x+b.x)/2 + (b.y-a.y)*0.1, my = (a.y+b.y)/2 + (a.x-b.x)*0.1;
+    ctx.save();
+    if (isNext) {
+      // Glowing gold path for next options
+      ctx.shadowColor = '#e8c030'; ctx.shadowBlur = 10;
+      ctx.setLineDash([8,5]); ctx.lineWidth = 2.5; ctx.strokeStyle = '#c89010'; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.quadraticCurveTo(mx,my,b.x,b.y); ctx.stroke();
+      // Arrow tip
+      var dx=b.x-mx,dy=b.y-my,dl=Math.sqrt(dx*dx+dy*dy); dx/=dl; dy/=dl;
+      ctx.setLineDash([]); ctx.shadowBlur=6;
+      ctx.beginPath(); ctx.moveTo(b.x-dx*14,b.y-dy*14);
+      ctx.lineTo(b.x-dx*14-dy*6,b.y-dy*14+dx*6);
+      ctx.lineTo(b.x-dx*7,b.y-dy*7);
+      ctx.lineTo(b.x-dx*14+dy*6,b.y-dy*14-dx*6);
+      ctx.closePath(); ctx.fillStyle='#c89010'; ctx.fill();
+    } else if (bothVisited) {
+      // Traveled road - solid brown ink
+      ctx.setLineDash([7,4]); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(90,55,15,0.8)'; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.quadraticCurveTo(mx,my,b.x,b.y); ctx.stroke();
+    } else {
+      // Unvisited - faint dotted trail
+      ctx.setLineDash([4,7]); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(90,55,15,0.35)'; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.quadraticCurveTo(mx,my,b.x,b.y); ctx.stroke();
+    }
+    ctx.restore();
+  });
+
+  // ── NODE VISUALS (cartographic marker style) ────────────────────────────────
+  // Cartographic symbol colors
+  var NV = {
+    start:    {fill:'#d4e8a0',ink:'#3a5818',accent:'#7ab030',symbol:'home'},
+    encounter:{fill:'#e8c0a8',ink:'#6a2010',accent:'#c04030',symbol:'sword'},
+    rest:     {fill:'#b8d4e8',ink:'#1a4870',accent:'#3080b8',symbol:'tent'},
+    unknown:  {fill:'#d8c8e8',ink:'#4a2880',accent:'#7050b0',symbol:'quest'},
+    elite:    {fill:'#e8a0a0',ink:'#600010',accent:'#a00020',symbol:'skull'},
+    event:    {fill:'#e8d890',ink:'#6a5000',accent:'#b08000',symbol:'scroll'},
+    temple:   {fill:'#e8d060',ink:'#604800',accent:'#a07800',symbol:'temple'},
+  };
+
+  NODES.forEach(function(node) {
+    var pos = nodePos(node), nt = NODE_TYPES[node.type], nv = NV[node.type]||NV.unknown;
+    var isVisited = S.visitedNodes.indexOf(node.id) >= 0;
+    var isCurrent = node.id === S.nodePos;
+    var isNext = highlightNextNodes && highlightNextNodes.indexOf(node.id) >= 0;
+    var rowScale = 0.85 + (node.row/NUM_ROWS)*0.28;
+    var r = (isCurrent?20:isNext?18:13)*rowScale;
+
+    ctx.save();
+
+    // Outer glow for interactive nodes only
+    if (isCurrent||isNext) {
+      var pulse = 0.55+0.45*Math.sin(now/(isCurrent?330:500));
+      var glowR = r+12+5*pulse;
+      var grd = ctx.createRadialGradient(pos.x,pos.y,r,pos.x,pos.y,glowR);
+      grd.addColorStop(0,'rgba(200,160,20,'+(0.45*pulse)+')');
+      grd.addColorStop(1,'rgba(200,160,20,0)');
+      ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(pos.x,pos.y,glowR,0,Math.PI*2); ctx.fill();
+    }
+
+    // Parchment shadow
+    ctx.beginPath(); ctx.arc(pos.x+1.5,pos.y+3,r+3,0,Math.PI*2);
+    ctx.fillStyle = 'rgba(40,20,0,0.22)'; ctx.fill();
+
+    // Main circle fill
+    ctx.beginPath(); ctx.arc(pos.x,pos.y,r+3,0,Math.PI*2);
+    if (isVisited||isCurrent||isNext) {
+      // Colored fill with radial gradient
+      var fg = ctx.createRadialGradient(pos.x-r*0.3,pos.y-r*0.35,0,pos.x,pos.y,r+3);
+      fg.addColorStop(0, lighten2(nv.fill,40));
+      fg.addColorStop(0.55, nv.fill);
+      fg.addColorStop(1, darken2(nv.fill,25));
+      ctx.fillStyle = fg;
+    } else {
+      // Unvisited - parchment grey
+      ctx.fillStyle = 'rgba(185,170,130,0.75)';
+    }
+    ctx.fill();
+
+    // Ink border (hand-drawn feel - slight imperfection via shadow)
+    ctx.lineWidth = isCurrent?2.5:isNext?2.0:1.2;
+    ctx.strokeStyle = isVisited||isCurrent||isNext ? nv.ink : 'rgba(100,70,25,0.5)';
+    ctx.shadowColor = 'rgba(30,15,0,0.3)'; ctx.shadowBlur = 3; ctx.shadowOffsetX=0.5; ctx.shadowOffsetY=0.5;
+    ctx.stroke();
+    ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0;
+
+    // Inner accent ring (like wax seal)
+    if (isVisited||isCurrent||isNext) {
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,r-2,0,Math.PI*2);
+      ctx.strokeStyle='rgba('+hexToRgb(nv.accent)+',0.4)'; ctx.lineWidth=1; ctx.stroke();
+    }
+
+    // Icon
+    ctx.globalAlpha = isVisited||isCurrent||isNext ? 1 : 0.3;
+    ctx.font = (r*1.05)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(nt.icon, pos.x, pos.y+1);
+    ctx.globalAlpha=1;
+
+    // Label for current / next nodes (cartographic serif style)
+    if (isNext||isCurrent) {
+      var lbl = nt.label;
+      ctx.font = (isCurrent?'bold ':'')+Math.round(8*rowScale)+'px Georgia, serif';
+      var tw = ctx.measureText(lbl).width + 8;
+      var ly = pos.y + r + 12;
+      // Parchment label background
+      ctx.fillStyle = 'rgba(220,200,150,0.88)';
+      ctx.strokeStyle = nv.ink; ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.roundRect?ctx.roundRect(pos.x-tw/2,ly-6,tw,13,2):ctx.rect(pos.x-tw/2,ly-6,tw,13);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = nv.ink; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(lbl, pos.x, ly+0.5);
+    }
+
+    // Current position: inked triangle marker + glowing dot (like an X marks the spot)
+    if (isCurrent) {
+      var bp = 0.65+0.35*Math.sin(now/300);
+      // Red marker dot
+      ctx.beginPath(); ctx.arc(pos.x,pos.y-r-12,6*bp,0,Math.PI*2);
+      ctx.fillStyle='rgba(180,30,20,0.9)';
+      ctx.shadowColor='rgba(220,60,30,0.7)'; ctx.shadowBlur=10*bp; ctx.fill(); ctx.shadowBlur=0;
+      // Small downward triangle
+      ctx.beginPath(); ctx.moveTo(pos.x,pos.y-r-4); ctx.lineTo(pos.x-4.5,pos.y-r-10); ctx.lineTo(pos.x+4.5,pos.y-r-10); ctx.closePath();
+      ctx.fillStyle='rgba(180,30,20,0.9)'; ctx.fill();
+    }
+
+    // Visited: small ink checkmark badge
+    if (isVisited&&!isCurrent) {
+      ctx.beginPath(); ctx.arc(pos.x+r*0.72,pos.y-r*0.72,5,0,Math.PI*2);
+      ctx.fillStyle=nv.ink; ctx.fill();
+      ctx.font='bold 6px sans-serif'; ctx.fillStyle='#fff';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('✓',pos.x+r*0.72,pos.y-r*0.72+0.5);
+    }
+
+    ctx.restore();
+  });
+
+  // ── COMPASS ROSE ────────────────────────────────────────────────────────────
+  ctx.save();
+  var cx2=W-20, cy2=H-20, cr2=10;
+  ctx.globalAlpha=0.35;
+  ctx.strokeStyle='rgba(40,20,5,0.8)'; ctx.lineWidth=0.8;
+  [['N',0],['S',Math.PI],['E',Math.PI/2],['W',-Math.PI/2]].forEach(function(d){
+    var a2=d[1]-Math.PI/2;
+    ctx.beginPath(); ctx.moveTo(cx2,cy2); ctx.lineTo(cx2+Math.cos(a2)*cr2,cy2+Math.sin(a2)*cr2); ctx.stroke();
+    ctx.font='bold 5px Georgia'; ctx.fillStyle='rgba(40,20,5,0.8)';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(d[0],cx2+Math.cos(a2)*cr2*1.6,cy2+Math.sin(a2)*cr2*1.6);
+  });
+  // Center circle
+  ctx.beginPath(); ctx.arc(cx2,cy2,2.5,0,Math.PI*2); ctx.fillStyle='rgba(40,20,5,0.6)'; ctx.fill();
+  ctx.globalAlpha=1; ctx.restore();
+}
+
+// Color helpers for cartographic nodes
+function hexToRgb(hex) {
+  var n=parseInt(hex.replace('#',''),16);
+  return ((n>>16)&255)+','+(((n>>8)&255))+','+(n&255);
+}
+function lighten2(hex, amt) {
+  var n=parseInt(hex.replace('#',''),16);
+  var r=Math.min(255,(n>>16)+amt), g=Math.min(255,((n>>8)&255)+amt), b=Math.min(255,(n&255)+amt);
+  return 'rgb('+r+','+g+','+b+')';
+}
+function darken2(hex, amt) {
+  var n=parseInt(hex.replace('#',''),16);
+  var r=Math.max(0,(n>>16)-amt), g=Math.max(0,((n>>8)&255)-amt), b=Math.max(0,(n&255)-amt);
+  return 'rgb('+r+','+g+','+b+')';
+}
+
+function animateSpireMap(canvasId, highlights) {
+  drawSpireMap(canvasId, highlights);
+  if (mapRaf !== null) mapRaf = requestAnimationFrame(function() { animateSpireMap(canvasId, highlights); });
+}
+
+function startSpireMap(canvasId, highlights) {
+  if (mapRaf !== null) { cancelAnimationFrame(mapRaf); }
+  mapRaf = 1; // non-null sentinel to start loop
+  setTimeout(function() { animateSpireMap(canvasId, highlights); }, 60);
+}
+
+function stopMap() {
+  if (mapRaf && mapRaf !== 1) cancelAnimationFrame(mapRaf);
+  mapRaf = null;
+}
+
+// ── RENDER ──────────────────────────────────────────────────────────────────────
+
+function saveKey() {
+  var input = document.getElementById('api-key-input');
+  var key = input ? input.value.trim() : '';
+  if (!key.startsWith('sk-ant-')) {
+    alert('That doesn\'t look like an Anthropic API key. It should start with sk-ant-');
+    return;
+  }
+  localStorage.setItem('waybound_api_key', key);
+  API_KEY = key;
+  S.screen = 'start';
+  render();
+}
+
+function rSetup() {
+  return '<div class="setup-wrap">'
+    + '<span class="setup-icon">🧭</span>'
+    + '<div class="fredoka setup-title">Waybound</div>'
+    + '<span class="setup-sub">To play, you need a free Anthropic API key.<br>It stays on your device and is never shared.</span>'
+    + '<div class="setup-card">'
+    + '<span class="setup-label">Your Anthropic API Key</span>'
+    + '<input id="api-key-input" class="setup-input" type="password" placeholder="sk-ant-..." />'
+    + '<span class="setup-hint">Get a free key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> &rarr; API Keys.<br>Your key is stored locally on this device only.</span>'
+    + '</div>'
+    + '<button class="btn btn-green" onclick="saveKey()">Start the Journey &rarr;</button>'
+    + '</div>';
+}
+
+function render() {
+  stopMap();
+  var app = document.getElementById('app');
+  if      (S.screen === 'setup')  { app.innerHTML = rSetup(); }
+  else if (S.screen === 'start') { app.innerHTML = rStart(); }
+  else if (S.screen === 'game')  { app.innerHTML = rGame(); startSpireMap('main-map', null); }
+  else if (S.screen === 'chore') {
+    app.innerHTML = rChore();
+    if (S.choreStep === 1 && !S.pathsLoading) {
+      var nextIds = S.pathOptions.map(function(p) { return p.nodeId; });
+      startSpireMap('chore-map', nextIds);
+    } else if (S.choreStep === 1) {
+      startSpireMap('chore-map', null);
+    }
+  }
+  else if (S.screen === 'end')   { app.innerHTML = rEnd(); }
+}
+
+function resMiniBar() {
+  return '<div class="res-mini-bar">'
+    + RES.map(function(r) {
+        var v = S.resources[r.id], danger = v <= 30;
+        return '<div class="res-mini-item">'
+          + r.icon + ' <span style="color:' + (danger ? 'var(--rose)' : r.color) + '">'
+          + (danger ? '⚠ ' : '') + v + '</span></div>';
+      }).join('')
+    + '</div>';
+}
+
+function mapLegend() {
+  var types = ['encounter','rest','unknown','elite','event'];
+  return '<div class="map-legend">'
+    + types.map(function(t) {
+        var nt = NODE_TYPES[t];
+        return '<div class="legend-item"><span>' + nt.icon + '</span><span>' + nt.label + '</span></div>';
+      }).join('')
+    + '</div>';
+}
+
+function rStart() {
+  return '<div class="start-wrap">'
+    + '<span class="start-emblem" style="animation:bounce 2.5s ease-in-out infinite;display:block;margin-bottom:6px"><svg width="90" height="90" viewBox="0 0 160 160" style="display:block;margin:0 auto 6px"><defs><clipPath id="wbi"><rect x="6" y="6" width="148" height="148" rx="20"/></clipPath></defs><rect x="2" y="2" width="156" height="156" rx="22" fill="#d4c090" stroke="#3a2208" stroke-width="3"/><rect x="6" y="6" width="148" height="148" rx="19" fill="#e8dbb8"/><rect x="6" y="6" width="148" height="88" rx="19" fill="rgba(175,210,235,0.22)" clip-path="url(#wbi)"/><g clip-path="url(#wbi)"><circle cx="28" cy="36" r="9.5" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><circle cx="40" cy="31" r="12" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><circle cx="53" cy="35" r="10" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><circle cx="41" cy="42" r="9" fill="#f4f0e4"/><rect x="19" y="36" width="44" height="8" fill="#f4f0e4"/><line x1="19" y1="44" x2="63" y2="44" stroke="#3a2208" stroke-width="1"/><circle cx="112" cy="30" r="8" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><circle cx="122" cy="25" r="10" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><circle cx="133" cy="29" r="8.5" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><circle cx="123" cy="36" r="8" fill="#f4f0e4"/><rect x="103" y="30" width="38" height="8" fill="#f4f0e4"/><line x1="103" y1="38" x2="141" y2="38" stroke="#3a2208" stroke-width="0.9"/><circle cx="76" cy="18" r="5.5" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.8"/><circle cx="85" cy="14" r="7" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.8"/><circle cx="94" cy="18" r="5.5" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.8"/><rect x="69" y="18" width="31" height="7" fill="#f4f0e4"/><line x1="69" y1="25" x2="100" y2="25" stroke="#3a2208" stroke-width="0.8"/></g><g clip-path="url(#wbi)"><path d="M6 102 L28 68 L50 102 Z" fill="#d0caa8" stroke="#3a2208" stroke-width="0.7" stroke-linejoin="round"/><path d="M44 102 L70 58 L96 102 Z" fill="#ccc6a2" stroke="#3a2208" stroke-width="0.8" stroke-linejoin="round"/><path d="M90 102 L116 64 L142 102 Z" fill="#d0caa8" stroke="#3a2208" stroke-width="0.7" stroke-linejoin="round"/></g><g clip-path="url(#wbi)"><path d="M6 122 L46 44 L86 122 Z" fill="#b4ac8c" stroke="#3a2208" stroke-width="1.8" stroke-linejoin="round"/><path d="M46 44 L38 64 L54 64 Z" fill="#f4f0e4" stroke="#3a2208" stroke-width="1.3"/><path d="M62 122 L100 20 L138 122 Z" fill="#a8a080" stroke="#3a2208" stroke-width="2.3" stroke-linejoin="round"/><path d="M100 20 L90 48 L110 48 Z" fill="#f8f4e8" stroke="#3a2208" stroke-width="1.6"/><path d="M120 122 L146 52 L154 122 Z" fill="#b8b094" stroke="#3a2208" stroke-width="1.6" stroke-linejoin="round"/><path d="M146 52 L140 68 L152 68 Z" fill="#f0ece0" stroke="#3a2208" stroke-width="1.1"/></g><path d="M6 122 Q40 114 80 118 Q120 122 154 114 L154 148 Q120 154 80 152 Q40 154 6 148 Z" fill="#88a840" stroke="#3a2208" stroke-width="1.2" clip-path="url(#wbi)"/><path d="M6 136 Q42 128 80 132 Q118 136 154 128" fill="none" stroke="rgba(100,160,210,0.5)" stroke-width="6" stroke-linecap="round" clip-path="url(#wbi)"/><path d="M6 136 Q42 128 80 132 Q118 136 154 128" fill="none" stroke="rgba(170,215,245,0.4)" stroke-width="3.5" stroke-linecap="round" clip-path="url(#wbi)"/><g clip-path="url(#wbi)"><ellipse cx="80" cy="124" rx="15" ry="3" fill="rgba(20,10,0,0.18)"/><path d="M64 122 L80 96 L96 122 Z" fill="#c03828" stroke="#1a0804" stroke-width="2" stroke-linejoin="round"/><path d="M64 122 L80 96 L72 122 Z" fill="rgba(0,0,0,0.14)"/><path d="M74 122 Q80 111 86 122 Z" fill="#100804"/><line x1="80" y1="96" x2="80" y2="88" stroke="#1a0804" stroke-width="1.5" stroke-linecap="round"/><circle cx="80" cy="87" r="2.2" fill="#1a0804"/></g><g clip-path="url(#wbi)"><line x1="100" y1="126" x2="112" y2="123" stroke="#5a3010" stroke-width="2.8" stroke-linecap="round"/><line x1="102" y1="124" x2="114" y2="126" stroke="#4a2808" stroke-width="2.8" stroke-linecap="round"/><ellipse cx="106" cy="126" rx="7" ry="2.2" fill="rgba(220,120,20,0.2)"/><path d="M102 126 Q101 118 106 112 Q108 118 109 122 Q111 115 106 109 Q104 117 103 121 Q107 111 110 115 Q111 119 109 123 Q107 117 106 126 Z" fill="#e87820"/><path d="M104 126 Q103 120 106 116 Q107 121 106 126 Z" fill="#f8d040"/></g></svg></span>'
+    + '<div class="fredoka start-title">Waybound</div>'
+    + '<span class="start-tag">Find Your Way Home</span>'
+    + '<p class="start-lore">Your sister Mara went into the jungle six months ago and never came back. This morning you found her journal page under the floorboards. She made it further than anyone knew — and someone was following her. The Temple of Aurathen is real, and whatever she found there is still waiting.</p>'
+    + '<div class="start-hints">'
+    + '<div class="hint-row"><span class="hint-icon">🧹</span><span>Every chore lets you move one step forward on the map</span></div>'
+    + '<div class="hint-row"><span class="hint-icon">⚔️</span><span>Node types signal risk — encounters hurt, rest restores, unknowns surprise</span></div>'
+    + '<div class="hint-row"><span class="hint-icon">⭐⭐</span><span>Hard chores (Bathrooms, Yard Work) count as <strong>2 steps</strong></span></div>'
+    + '</div>'
+    + '<button class="btn btn-green" onclick="startGame()">🌟 Find Mara</button>'
+    + '</div>';
+}
+
+function rGame() {
+  var latest = S.passages.length ? S.passages[S.passages.length-1] : null;
+  var cur = currentNode();
+  var nt = cur ? NODE_TYPES[cur.type] : NODE_TYPES.start;
+  var row = cur ? cur.row : 0;
+  var resCards = RES.map(function(r) {
+    var v=S.resources[r.id], danger=v<=20, warn=v<=15?'Critical!':v<=30?'Low':'';
+    return '<div class="res-card'+(danger?' danger':'')+'"><span class="res-icon">'+r.icon+'</span><span class="res-label">'+r.name+'</span><div class="res-track"><div class="res-fill" style="width:'+v+'%;background:'+r.bar+'"></div></div><span class="res-val" style="color:'+r.color+'">'+v+'</span>'+(warn?'<span class="res-warn">'+warn+'</span>':'')+'</div>';
+  }).join('');
+  var sceneHtml = '';
+  if (S.sceneImageLoading) sceneHtml = '<div class="scene-wrap"><div class="scene-loading"><span class="spin">🎨</span> Rendering scene… (15-20 sec)</div></div>';
+  else if (S.sceneImageUrl) sceneHtml = '<div class="scene-wrap"><img class="scene-img" src="'+S.sceneImageUrl+'" alt="" onerror="this.parentElement.style.display=\'none\'"></div>';
+  var story = S.storyLoading
+    ? '<div class="loading-row"><span class="spin">🌀</span> Writing your story…</div>'
+    : '<div class="story-body">'+hx(latest ? latest.text : 'The jungle stretches out before you. Mara came this way.')+'</div>';
+  var hist = '';
+  if (S.passages.length > 1) {
+    hist = '<details><summary class="history-toggle">📜 Journal (' + (S.passages.length-1) + ' previous entries)</summary>'
+      + S.passages.slice(0,-1).reverse().map(function(p) {
+          return '<div class="card history-passage"><span class="chapter-label">📖 '+hx(p.chapter)+'</span><div class="story-body">'+hx(p.text)+'</div></div>';
+        }).join('') + '</details>';
+  }
+  return '<div class="game-header-row">'
+    + '<span class="fredoka game-title" style="display:flex;align-items:center;gap:8px"><svg width="24" height="24" viewBox="0 0 160 160"><defs><clipPath id="wbh"><rect x="6" y="6" width="148" height="148" rx="20"/></clipPath></defs><rect x="2" y="2" width="156" height="156" rx="22" fill="#d4c090" stroke="#3a2208" stroke-width="3"/><rect x="6" y="6" width="148" height="148" rx="19" fill="#e8dbb8"/><rect x="6" y="6" width="148" height="88" rx="19" fill="rgba(175,210,235,0.22)" clip-path="url(#wbh)"/><g clip-path="url(#wbh)"><circle cx="40" cy="31" r="12" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><circle cx="28" cy="36" r="9.5" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><circle cx="53" cy="35" r="10" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><rect x="19" y="36" width="44" height="8" fill="#f4f0e4"/><line x1="19" y1="44" x2="63" y2="44" stroke="#3a2208" stroke-width="1"/><circle cx="122" cy="25" r="10" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><circle cx="112" cy="30" r="8" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><circle cx="133" cy="29" r="8.5" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><rect x="103" y="30" width="38" height="8" fill="#f4f0e4"/><line x1="103" y1="38" x2="141" y2="38" stroke="#3a2208" stroke-width="0.9"/></g><g clip-path="url(#wbh)"><path d="M6 122 L46 44 L86 122 Z" fill="#b4ac8c" stroke="#3a2208" stroke-width="1.8" stroke-linejoin="round"/><path d="M46 44 L38 64 L54 64 Z" fill="#f4f0e4" stroke="#3a2208" stroke-width="1.3"/><path d="M62 122 L100 20 L138 122 Z" fill="#a8a080" stroke="#3a2208" stroke-width="2.3" stroke-linejoin="round"/><path d="M100 20 L90 48 L110 48 Z" fill="#f8f4e8" stroke="#3a2208" stroke-width="1.6"/><path d="M120 122 L146 52 L154 122 Z" fill="#b8b094" stroke="#3a2208" stroke-width="1.6" stroke-linejoin="round"/></g><path d="M6 122 Q40 114 80 118 Q120 122 154 114 L154 148 Q120 154 80 152 Q40 154 6 148 Z" fill="#88a840" stroke="#3a2208" stroke-width="1.2" clip-path="url(#wbh)"/><g clip-path="url(#wbh)"><path d="M64 122 L80 96 L96 122 Z" fill="#c03828" stroke="#1a0804" stroke-width="2" stroke-linejoin="round"/><path d="M74 122 Q80 111 86 122 Z" fill="#100804"/><line x1="100" y1="126" x2="112" y2="123" stroke="#5a3010" stroke-width="2.8" stroke-linecap="round"/><line x1="102" y1="124" x2="114" y2="126" stroke="#4a2808" stroke-width="2.8" stroke-linecap="round"/><path d="M102 126 Q101 118 106 112 Q108 118 106 126 Z" fill="#e87820"/><path d="M104 126 Q103 120 106 116 Q107 121 106 126 Z" fill="#f8d040"/></g></svg> Waybound</span>'
+    + '<div class="game-meta"><span class="day-badge">Row ' + row + '/5 · ' + S.choresCompleted + ' chores</span>'
+    + '<button class="reset-btn" onclick="confirmReset()">↺ Reset</button></div></div>'
+    + '<div class="resources">' + resCards + '</div>'
+    + '<div class="map-canvas-wrap"><canvas id="main-map" style="display:block;width:100%"></canvas></div>'
+    + mapLegend()
+    + sceneHtml
+    + '<div class="card story-card"><span class="chapter-label">📖 '+hx(latest?latest.chapter:'The Expedition Begins')+'</span>'+story+'</div>'
+    + hist
+    + '<button class="fab" onclick="openChore()">✨ Chore Done!</button>';
+}
+
+function rChore() {
+  var step = S.choreStep;
+  var dots = [0,1].map(function(i) {
+    return '<div class="dot'+(i===step?' active':i<step?' done':'')+'"></div>';
+  }).join('');
+  var inner = '';
+  if (step === 0) {
+    inner = resMiniBar()
+      + '<span class="fredoka flow-head">🎉 Chore Complete!</span>'
+      + '<span class="flow-sub">What did you accomplish?</span>'
+      + '<span class="section-label">Select your chore</span>'
+      + '<div class="chore-grid">'
+      + CHORES.map(function(c, idx) {
+          var selected = S.selectedChore && S.selectedChore.id === c.id;
+          return '<button class="chore-btn'+(selected?' selected':'')+'" data-idx="'+idx+'" onclick="pickChore(this.dataset.idx)">'
+            + '<span class="chore-icon-big">'+c.icon+'</span>'
+            + hx(c.name)
+            + '<span class="chore-diff diff-'+c.diff+'">'
+            + (c.diff==='hard'?'⭐⭐ Hard · 2 steps':c.diff==='medium'?'⭐ Medium':'Easy')
+            + '</span></button>';
+        }).join('')
+      + '</div>'
+      + '<button class="btn btn-green" '+(S.selectedChore?'':'disabled')+' onclick="goNext()">Continue →</button>';
+  } else if (step === 1) {
+    var nextNodes = getNextNodes();
+    if (S.pathsLoading) {
+      inner = '<div class="map-canvas-wrap"><canvas id="chore-map" style="display:block;width:100%"></canvas></div>'
+        + resMiniBar()
+        + '<span class="fredoka flow-head">🌿 Scouting routes…</span>'
+        + '<div class="paths-loading"><span class="spin" style="font-size:2rem;display:block;margin-bottom:12px">🌀</span>Charting paths through the jungle…</div>';
+    } else {
+      inner = '<div class="map-canvas-wrap"><canvas id="chore-map" style="display:block;width:100%"></canvas></div>'
+        + mapLegend()
+        + resMiniBar()
+        + '<span class="fredoka flow-head">🌿 Choose your path</span>'
+        + '<span class="flow-sub">The map shows where each route leads ↑</span>'
+        + '<div class="path-cards">'
+        + S.pathOptions.map(function(opt, i) {
+            var nt = NODE_TYPES[opt.type] || NODE_TYPES.unknown;
+            var selected = S.selectedPath === i;
+            return '<button class="path-card'+(selected?' selected':'')+'" data-i="'+i+'" onclick="pickPath(this.dataset.i)" style="'+(selected?'border-color:'+nt.color+';background:'+nt.bg+';box-shadow:0 3px 0 '+nt.color+';':'')+'">'
+              + '<div class="path-node-icon" style="color:'+nt.color+';background:'+nt.bg+'">'+nt.icon+'</div>'
+              + '<div class="path-card-body">'
+              + '<div class="path-node-type" style="color:'+nt.color+'">'+nt.label+'</div>'
+              + '<div class="path-node-desc">'+hx(opt.desc)+'</div>'
+              + '</div></button>';
+          }).join('')
+        + '</div>'
+        + '<button class="btn btn-amber" '+(S.selectedPath===null?'disabled':'')+' onclick="confirmChore()">🌿 Push Forward</button>';
+    }
+  }
+  return '<div class="chore-flow-wrap">'
+    + '<div class="back-row"><button class="btn-ghost" onclick="closeChore()">← Back to Camp</button></div>'
+    + '<div class="step-dots">'+dots+'</div>'
+    + inner + '</div>';
+}
+
+function rEnd() {
+  var won = S.nodePos === 14 || (currentNode() && currentNode().type === 'temple');
+  return '<div class="end-wrap">'
+    + '<span class="end-emblem">'+(won?'🏛️':'🏡')+'</span>'
+    + '<div class="fredoka end-title '+(won?'victory':'defeat')+'">'+(won?'The Temple of Aurathen':'The Jungle Wins Today')+'</div>'
+    + (S.endLoading ? '<div class="loading-row" style="justify-content:center;margin-bottom:24px"><span class="spin">🌀</span> Writing your ending…</div>' : '<div class="end-story">'+hx(S.endingText)+'</div>')
+    + '<div class="end-stats">Chores: <strong>'+S.choresCompleted+'</strong><br>'
+    + 'Gold: <strong style="color:#c88010">'+S.resources.gold+'</strong> &nbsp;·&nbsp; '
+    + 'Health: <strong style="color:#c04050">'+S.resources.health+'</strong> &nbsp;·&nbsp; '
+    + 'Food: <strong style="color:#4a8030">'+S.resources.food+'</strong></div>'
+    + '<button class="btn btn-green" onclick="restart()">🌿 Try Again</button>'
+    + '</div>';
+}
+
+if (S.screen === 'chore') S.screen = 'game';
+render();
+
+</script>
+</body>
+</html>
