@@ -126,6 +126,25 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .end-stats{background:var(--green4);border:2px solid var(--green3);border-radius:8px;padding:14px 16px;font-size:.88rem;color:var(--text2);margin-bottom:24px;line-height:1.8;box-shadow:0 3px 0 var(--green3)}
 #toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--green);color:#fff;border:3px solid #3a6030;border-radius:8px;padding:10px 22px;font-size:.9rem;font-family:'Fredoka',sans-serif;font-weight:600;z-index:200;transition:transform .3s ease;white-space:nowrap;pointer-events:none;box-shadow:0 4px 0 #3a6030}
 #toast.show{transform:translateX(-50%) translateY(0)}
+/* ── ARRIVAL EFFECTS ──────────────────────────────────────────────────────── */
+#arrival-flash{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity 0.3s ease}
+#arrival-flash.show{opacity:1;pointer-events:all}
+#arrival-flash.hide{opacity:0}
+.arrival-icon{font-size:5rem;margin-bottom:16px;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.3));animation:arrivalPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}
+.arrival-label{font-family:'Fredoka',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,0.3)}
+@keyframes arrivalPop{from{transform:scale(0.5) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+/* Mood tinting */
+body{transition:background-color 1.2s ease}
+body.mood-encounter{background:#fdf0f0}
+body.mood-rest{background:#f0f5fd}
+body.mood-unknown{background:#f3f0fd}
+body.mood-elite{background:#fdf0f0}
+body.mood-event{background:#fdf8ec}
+body.mood-start{background:var(--bg)}
+body.mood-temple{background:#fdf8ec}
+/* Typewriter story */
+.story-body.typing .story-char{opacity:0;animation:charFade 0.03s forwards}
+@keyframes charFade{to{opacity:1}}
 .setup-wrap{text-align:center;padding:48px 16px 32px;max-width:400px;margin:0 auto}
 .setup-icon{font-size:3.5rem;display:block;margin-bottom:16px;animation:bounce 2.5s ease-in-out infinite}
 .setup-title{font-size:1.8rem;color:var(--green);text-shadow:2px 2px 0 #3a6030;margin-bottom:6px}
@@ -140,6 +159,7 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 </head>
 <body>
 <div id="toast"></div>
+<div id="arrival-flash"></div>
 <div id="app"></div>
 <script>
 
@@ -202,7 +222,8 @@ function fresh() {
     choreStep:0, selectedChore:null, selectedPath:null,
     pathOptions:[], pathsLoading:false, storyLoading:false,
     sceneImageUrl:'', sceneImageLoading:false,
-    eventLog:[], resourceTrend:{gold:0, health:0, food:0}
+    eventLog:[], resourceTrend:{gold:0, health:0, food:0},
+    prevNodePos: null, arrivalAnimating: false
   };
 }
 
@@ -486,6 +507,7 @@ async function confirmChore() {
   var chosen = S.pathOptions[S.selectedPath];
   var chosenNode = NODES.find(function(n) { return n.id === chosen.nodeId; });
   var deltas = NODE_DELTAS[chosenNode.type] || {};
+  S.prevNodePos = S.nodePos;
   S.resources.gold   = Math.max(0, Math.min(MAX, S.resources.gold   + (deltas.goldDelta   || 0)));
   S.resources.health = Math.max(0, Math.min(MAX, S.resources.health + (deltas.healthDelta || 0)));
   S.resources.food   = Math.max(0, Math.min(MAX, S.resources.food   + (deltas.foodDelta   || 0)));
@@ -519,6 +541,13 @@ async function confirmChore() {
     });
     else S.sceneImageLoading = false;
     save(); render();
+    // Arrival effects
+    showArrival(chosenNode.type);
+    setMoodTint(chosenNode.type);
+    setTimeout(function() {
+      var lp2 = S.passages[S.passages.length-1];
+      if (lp2) typewriterStory(lp2.text);
+    }, 800);
     showToast('Chore done. The path opens.');
   }
 }
@@ -529,6 +558,45 @@ function showToast(msg) {
   var el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('show');
   setTimeout(function() { el.classList.remove('show'); }, 2800);
+}
+
+function showArrival(nodeType) {
+  var nt = NODE_TYPES[nodeType] || NODE_TYPES.unknown;
+  var el = document.getElementById('arrival-flash');
+  if (!el) return;
+  // Set background color matching node type
+  el.style.background = nt.bg + 'ee';
+  el.innerHTML = '<div class="arrival-icon">' + nt.icon + '</div>'
+    + '<div class="arrival-label" style="color:' + nt.color + '">' + nt.label + '</div>';
+  el.classList.add('show');
+  el.classList.remove('hide');
+  setTimeout(function() {
+    el.classList.add('hide');
+    setTimeout(function() { el.classList.remove('show','hide'); el.innerHTML = ''; }, 400);
+  }, 1200);
+}
+
+function setMoodTint(nodeType) {
+  document.body.className = document.body.className.replace(/mood-\w+/g, '').trim();
+  document.body.classList.add('mood-' + (nodeType || 'start'));
+}
+
+function typewriterStory(text) {
+  var el = document.querySelector('.story-body');
+  if (!el || !text) return;
+  el.classList.add('typing');
+  el.innerHTML = '';
+  var chars = text.split('');
+  var baseDelay = 18; // ms per character
+  chars.forEach(function(ch, i) {
+    var span = document.createElement('span');
+    span.className = 'story-char';
+    span.textContent = ch;
+    span.style.animationDelay = (i * baseDelay) + 'ms';
+    el.appendChild(span);
+  });
+  // Remove typing class after animation completes
+  setTimeout(function() { el.classList.remove('typing'); }, chars.length * baseDelay + 200);
 }
 
 function hx(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -545,7 +613,7 @@ var _mapBgLoaded = false;
   _mapBgImg = img;
 })();
 
-function drawSpireMap(canvasId, highlightNextNodes) {
+function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, travelT) {
   var canvas = document.getElementById(canvasId);
   if (!canvas) return;
   var W = canvas.offsetWidth;
@@ -777,18 +845,20 @@ function drawSpireMap(canvasId, highlightNextNodes) {
 
     // CURRENT POSITION — red wax seal dot above symbol
     if (isCur) {
-      ctx.globalAlpha = 1;
-      var pulse = 0.65 + 0.35*Math.sin(now/320);
-      // Pulsing ring
-      ctx.beginPath(); ctx.arc(x, y-13*u-9*u, 9*u*pulse, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(200,35,15,0.90)';
-      ctx.shadowColor = 'rgba(220,50,20,0.70)'; ctx.shadowBlur = 10*pulse; ctx.fill(); ctx.shadowBlur = 0;
-      // Triangle pointer
-      ctx.beginPath(); ctx.moveTo(x, y-13*u-2); ctx.lineTo(x-4.5*u, y-13*u-8*u); ctx.lineTo(x+4.5*u, y-13*u-8*u); ctx.closePath();
-      ctx.fillStyle = 'rgba(200,35,15,0.90)'; ctx.fill();
-      // Ink ring around wax seal
-      ctx.beginPath(); ctx.arc(x, y-13*u-9*u, 9*u*pulse, 0, Math.PI*2);
-      ctx.strokeStyle = 'rgba(80,15,5,0.60)'; ctx.lineWidth = 0.8; ctx.stroke();
+      // If travelling, skip the static marker (we draw it interpolated below)
+      if (travelFromId != null && travelT != null && travelT < 1) {
+        // draw nothing here — interpolated marker drawn after node loop
+      } else {
+        ctx.globalAlpha = 1;
+        var pulse = 0.65 + 0.35*Math.sin(now/320);
+        ctx.beginPath(); ctx.arc(x, y-13*u-9*u, 9*u*pulse, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(200,35,15,0.90)';
+        ctx.shadowColor = 'rgba(220,50,20,0.70)'; ctx.shadowBlur = 10*pulse; ctx.fill(); ctx.shadowBlur = 0;
+        ctx.beginPath(); ctx.moveTo(x, y-13*u-2); ctx.lineTo(x-4.5*u, y-13*u-8*u); ctx.lineTo(x+4.5*u, y-13*u-8*u); ctx.closePath();
+        ctx.fillStyle = 'rgba(200,35,15,0.90)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(x, y-13*u-9*u, 9*u*pulse, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(80,15,5,0.60)'; ctx.lineWidth = 0.8; ctx.stroke();
+      }
     }
 
     // NEXT NODE — subtle ink bracket/frame to indicate availability
@@ -837,11 +907,68 @@ function drawSpireMap(canvasId, highlightNextNodes) {
       ctx.restore();
     }
   });
+
+  // ── TRAVELLING MARKER — interpolates between two nodes ───────────────────────
+  if (travelFromId != null && travelToId != null && travelT != null) {
+    var fromNode = NODES[travelFromId], toNode = NODES[travelToId];
+    if (fromNode && toNode) {
+      var fp = nodePos(fromNode), tp2 = nodePos(toNode);
+      var u2 = (0.82 + (toNode.row/NUM_ROWS)*0.30) * 1.3 * (W/380);
+      var mx2 = (fp.x+tp2.x)/2 + (tp2.y-fp.y)*0.08;
+      var my2 = (fp.y+tp2.y)/2 + (fp.x-tp2.x)*0.08;
+      var t2 = travelT;
+      var bx = (1-t2)*(1-t2)*fp.x + 2*(1-t2)*t2*mx2 + t2*t2*tp2.x;
+      var by = (1-t2)*(1-t2)*fp.y + 2*(1-t2)*t2*my2 + t2*t2*tp2.y;
+      var markerY = by - 13*u2 - 9*u2;
+      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(bx, markerY, 9*u2, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(200,35,15,0.92)';
+      ctx.shadowColor = 'rgba(220,50,20,0.70)'; ctx.shadowBlur = 12; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.moveTo(bx, by-13*u2-2); ctx.lineTo(bx-4.5*u2, markerY); ctx.lineTo(bx+4.5*u2, markerY); ctx.closePath();
+      ctx.fillStyle = 'rgba(200,35,15,0.92)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(bx, markerY, 9*u2, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(80,15,5,0.60)'; ctx.lineWidth = 0.8; ctx.stroke();
+    }
+  }
 }
 
 function animateSpireMap(canvasId, highlights) {
   drawSpireMap(canvasId, highlights);
   if (mapRaf !== null) mapRaf = requestAnimationFrame(function() { animateSpireMap(canvasId, highlights); });
+}
+
+var _markerAnimT = 1; // 0→1 travel progress
+var _markerAnimFrame = null;
+
+function animateMarkerTravel(canvasId, fromId, toId, onDone) {
+  if (_markerAnimFrame) cancelAnimationFrame(_markerAnimFrame);
+  _markerAnimT = 0;
+  var start = null;
+  var duration = 600; // ms
+  function step(ts) {
+    if (!start) start = ts;
+    _markerAnimT = Math.min(1, (ts - start) / duration);
+    // Ease in-out
+    var t = _markerAnimT < 0.5 ? 2*_markerAnimT*_markerAnimT : -1+(4-2*_markerAnimT)*_markerAnimT;
+    drawSpireMapWithTravel(canvasId, fromId, toId, t);
+    if (_markerAnimT < 1) {
+      _markerAnimFrame = requestAnimationFrame(step);
+    } else {
+      _markerAnimFrame = null;
+      _markerAnimT = 1;
+      if (onDone) onDone();
+      startSpireMap(canvasId, null);
+    }
+  }
+  _markerAnimFrame = requestAnimationFrame(step);
+}
+
+function drawSpireMapWithTravel(canvasId, fromId, toId, t) {
+  // Temporarily override nodePos for drawing
+  var realPos = S.nodePos;
+  var realPrev = S.prevNodePos;
+  // Draw the map normally but with interpolated marker
+  drawSpireMap(canvasId, null, fromId, toId, t);
 }
 
 function startSpireMap(canvasId, highlights) {
@@ -889,7 +1016,16 @@ function render() {
   var app = document.getElementById('app');
   if      (S.screen === 'setup')  { app.innerHTML = rSetup(); }
   else if (S.screen === 'start') { app.innerHTML = rStart(); }
-  else if (S.screen === 'game')  { app.innerHTML = rGame(); startSpireMap('main-map', null); }
+  else if (S.screen === 'game')  {
+    app.innerHTML = rGame();
+    if (S.prevNodePos != null && S.prevNodePos !== S.nodePos) {
+      animateMarkerTravel('main-map', S.prevNodePos, S.nodePos, function() {
+        S.prevNodePos = null;
+      });
+    } else {
+      startSpireMap('main-map', null);
+    }
+  }
   else if (S.screen === 'chore') {
     app.innerHTML = rChore();
     if (S.choreStep === 1 && !S.pathsLoading) {
