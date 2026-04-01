@@ -61,7 +61,7 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .res-label{font-size:.58rem;text-transform:uppercase;letter-spacing:.15em;color:rgba(60,32,8,0.72);margin-bottom:5px;display:block;font-family:'Georgia',serif;font-style:italic}
 .res-track{height:6px;background:rgba(160,120,60,0.22);border-radius:0;overflow:hidden;margin-bottom:4px;border:0.8px solid rgba(80,45,10,0.28)}
 .res-fill{height:100%;border-radius:0;transition:width .7s ease}
-.res-val{font-family:'Georgia',serif;font-size:.95rem;font-weight:bold;color:rgba(45,20,5,0.88)
+.res-val{font-family:'Georgia',serif;font-size:.95rem;font-weight:bold;color:rgba(45,20,5,0.88)}
 .res-warn{font-size:.58rem;color:var(--rose);display:block;margin-top:2px;font-family:'Fredoka',sans-serif;animation:flash 1s infinite}
 .res-card .res-icon svg{display:block;margin:0 auto}
 @keyframes flash{0%,100%{opacity:1}50%{opacity:.4}}
@@ -833,7 +833,7 @@ function mapLegend() {
   return '<div class="map-legend">'
     + types.map(function(t) {
         var nt = NODE_TYPES[t];
-        return '<div class="legend-item">' + nt.label + '</div>';
+        return '<div class="legend-item">' + nt.icon + ' ' + nt.label + '</div>';
       }).join('')
     + '</div>';
 }
@@ -964,4 +964,4 @@ render();
 
 </script>
 </body>
-</html.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}>
+</html>
