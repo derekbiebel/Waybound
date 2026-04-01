@@ -547,7 +547,6 @@ async function confirmChore() {
     save(); render();
     // Arrival effects — deferred so render() DOM is settled first
     setTimeout(function() {
-      console.log('Firing arrival effects for:', chosenNode.type);
       showArrival(chosenNode.type);
     }, 50);
     setTimeout(function() {
