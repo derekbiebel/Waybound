@@ -543,11 +543,13 @@ async function confirmChore() {
     save(); render();
     // Arrival effects — deferred so render() DOM is settled first
     setTimeout(function() {
+      console.log('Firing arrival effects for:', chosenNode.type);
       showArrival(chosenNode.type);
       setMoodTint(chosenNode.type);
     }, 50);
     setTimeout(function() {
       var lp2 = S.passages[S.passages.length-1];
+      console.log('Firing typewriter, passage:', lp2 ? lp2.text.slice(0,40) : 'none');
       if (lp2) typewriterStory(lp2.text);
     }, 900);
     showToast('Chore done. The path opens.');
