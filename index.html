@@ -201,7 +201,8 @@ function fresh() {
     choresCompleted:0, endingText:'', endLoading:false,
     choreStep:0, selectedChore:null, selectedPath:null,
     pathOptions:[], pathsLoading:false, storyLoading:false,
-    sceneImageUrl:'', sceneImageLoading:false
+    sceneImageUrl:'', sceneImageLoading:false,
+    eventLog:[], resourceTrend:{gold:0, health:0, food:0}
   };
 }
 
@@ -245,6 +246,66 @@ function getProgress() {
   return cur ? cur.row : 0;
 }
 
+// ── MEMORY & EVENT LOG ─────────────────────────────────────────────────────────
+
+function logEvent(type, nodeType, deltas, chore) {
+  var entry = { step: S.choresCompleted, type: type, node: nodeType };
+  if (deltas.healthDelta < -20) entry.note = 'badly injured';
+  else if (deltas.healthDelta < 0) entry.note = 'took damage';
+  else if (deltas.healthDelta > 0) entry.note = 'recovered health';
+  if (deltas.foodDelta < -15) entry.note = (entry.note ? entry.note + ', ' : '') + 'food running low';
+  if (deltas.goldDelta > 20) entry.note = (entry.note ? entry.note + ', ' : '') + 'found significant gold';
+  if (chore) entry.chore = chore.name;
+  S.eventLog.push(entry);
+  // Keep log compact — last 8 events only
+  if (S.eventLog.length > 8) S.eventLog = S.eventLog.slice(-8);
+  // Track resource trend
+  S.resourceTrend.gold   += (deltas.goldDelta   || 0);
+  S.resourceTrend.health += (deltas.healthDelta || 0);
+  S.resourceTrend.food   += (deltas.foodDelta   || 0);
+}
+
+function journalSummary() {
+  var r = S.resources;
+  var low = [];
+  if (r.health <= 25) low.push('critically injured');
+  else if (r.health <= 45) low.push('wounded');
+  if (r.food <= 25) low.push('near starvation');
+  else if (r.food <= 45) low.push('hungry');
+  if (r.gold <= 20) low.push('nearly broke');
+
+  var trend = [];
+  if (S.resourceTrend.health < -40) trend.push('health has been steadily declining');
+  if (S.resourceTrend.food < -40) trend.push('food supplies are depleting fast');
+  if (S.resourceTrend.gold > 40) trend.push('gold reserves have been building');
+
+  var nodeTypeCounts = {};
+  S.visitedNodes.forEach(function(id) {
+    var n = NODES[id];
+    if (n) nodeTypeCounts[n.type] = (nodeTypeCounts[n.type] || 0) + 1;
+  });
+  var routeStyle = [];
+  if ((nodeTypeCounts.encounter || 0) >= 2) routeStyle.push('taken an aggressive, dangerous route');
+  if ((nodeTypeCounts.rest || 0) >= 2) routeStyle.push('played it cautiously, resting often');
+  if ((nodeTypeCounts.elite || 0) >= 1) routeStyle.push('survived at least one elite threat');
+  if ((nodeTypeCounts.event || 0) >= 2) routeStyle.push('uncovered multiple clues about Mara');
+
+  var recentEvents = S.eventLog.slice(-4).map(function(e) {
+    return e.node + (e.note ? ' (' + e.note + ')' : '');
+  }).join(' → ');
+
+  var progress = Math.round((S.visitedNodes.length / 15) * 100);
+
+  return [
+    'JOURNEY SO FAR (' + S.choresCompleted + ' chores, ~' + progress + '% through):',
+    low.length ? 'Current state: ' + low.join(', ') + '.' : 'Current state: holding together.',
+    trend.length ? 'Trend: ' + trend.join('; ') + '.' : '',
+    routeStyle.length ? 'Route character: has ' + routeStyle.join(', ') + '.' : '',
+    recentEvents ? 'Recent path: ' + recentEvents + '.' : '',
+    'Resources: Gold ' + r.gold + ', Health ' + r.health + ', Food ' + r.food + ' /100.',
+  ].filter(Boolean).join('\n');
+}
+
 // ── AI PROMPTS ─────────────────────────────────────────────────────────────────
 
 async function genOpening() {
@@ -259,27 +320,28 @@ Specific and personal. No lists. No markdown.`);
 async function genPathDescriptions(nextNodes) {
   var cur = currentNode();
   var last = S.passages.length ? S.passages[S.passages.length-1].text : '';
-  var low = Object.entries(S.resources).filter(function(e) { return e[1] <= 30; }).map(function(e) { return e[0]; });
   var nodeDescs = nextNodes.map(function(n) {
     return NODE_TYPES[n.type].icon + ' ' + NODE_TYPES[n.type].label + ' (' + n.type + ')';
   }).join(', ');
 
   var prompt = LORE + `
 
-Current location: row ${cur.row} of 5, node type: ${cur.type}
-Last passage: "${last.slice(0,200)}"
-Resources: Gold ${S.resources.gold}, Health ${S.resources.health}, Food ${S.resources.food} /100.
-${low.length ? 'CRITICAL: ' + low.join(' and ') + ' dangerously low.' : ''}
+${journalSummary()}
 
-The player must choose between these path options: ${nodeDescs}
+Last passage: "${last.slice(0,250)}"
 
-For each path option, write a vivid 20-30 word description of what awaits down that route — evocative, atmospheric, enough to make a meaningful choice.
-The description should implicitly signal the risk/reward of that node type:
-- Encounter: danger, confrontation, something blocking the way
-- Rest: shelter, quiet, a chance to breathe
-- Unknown: mystery, strangeness, something that doesn't add up
-- Elite: serious threat or major obstacle, but something clearly valuable nearby
-- Event: something personal, a trace of Mara or Vey, a story moment
+The protagonist must now choose between these routes: ${nodeDescs}
+
+Write a vivid 20-30 word description for each path. The descriptions MUST:
+- Reflect the protagonist's current physical/emotional state (injured? hungry? running out of time?)
+- Feel like they follow naturally from the last passage
+- Implicitly signal the risk/reward:
+  - Encounter: danger, something blocking the way, conflict
+  - Rest: shelter, quiet, recovery — but time lost
+  - Unknown: something strange, doesn't add up, could go either way
+  - Elite: serious threat, but something valuable is clearly nearby
+  - Event: a trace of Mara or Vey, a story clue, a personal moment
+- Never repeat descriptions from earlier in this run
 
 Reply ONLY with raw JSON array, no markdown:
 [{"nodeId":${nextNodes[0].id},"desc":"..."},{"nodeId":${nextNodes[1] ? nextNodes[1].id : nextNodes[0].id},"desc":"..."}${nextNodes[2] ? ',{"nodeId":' + nextNodes[2].id + ',"desc":"..."}' : ''}]`;
@@ -289,37 +351,51 @@ Reply ONLY with raw JSON array, no markdown:
 }
 
 async function genPassage(chosenNode) {
-  var cur = currentNode();
   var low = Object.entries(S.resources).filter(function(e) { return e[1] <= 30; }).map(function(e) { return e[0]; });
-  var nearEnd = chosenNode.row >= 4;
+  var critical = Object.entries(S.resources).filter(function(e) { return e[1] <= 15; }).map(function(e) { return e[0]; });
+  var nearEnd = chosenNode.row >= 7;
+  var veryNearEnd = chosenNode.row >= 9;
   var last = S.passages.length ? S.passages[S.passages.length-1].text : '';
   var deltas = NODE_DELTAS[chosenNode.type] || {};
   var ch = [];
-  if (deltas.goldDelta > 0) ch.push('found ' + deltas.goldDelta + ' gold');
-  if (deltas.goldDelta < 0) ch.push('lost ' + Math.abs(deltas.goldDelta) + ' gold');
-  if (deltas.healthDelta > 0) ch.push('recovered ' + deltas.healthDelta + ' health');
-  if (deltas.healthDelta < 0) ch.push('took ' + Math.abs(deltas.healthDelta) + ' damage');
-  if (deltas.foodDelta > 0) ch.push('found ' + deltas.foodDelta + ' food');
-  if (deltas.foodDelta < 0) ch.push('consumed ' + Math.abs(deltas.foodDelta) + ' food');
-  var chStr = ch.length ? ch.join(', ') : 'no resource change';
+  if (deltas.goldDelta > 0) ch.push('gained ' + deltas.goldDelta + ' gold worth of supplies/valuables');
+  if (deltas.goldDelta < 0) ch.push('lost ' + Math.abs(deltas.goldDelta) + ' gold worth of gear/bribes/damage');
+  if (deltas.healthDelta > 0) ch.push('recovered ' + deltas.healthDelta + ' health points');
+  if (deltas.healthDelta < 0) ch.push('took ' + Math.abs(deltas.healthDelta) + ' points of physical damage');
+  if (deltas.foodDelta > 0) ch.push('found food worth ' + deltas.foodDelta + ' provisions');
+  if (deltas.foodDelta < 0) ch.push('consumed ' + Math.abs(deltas.foodDelta) + ' provisions');
+  var chStr = ch.length ? ch.join('; ') : 'no resource change this leg';
   var nodeContext = NODE_PROMPTS[chosenNode.type] || '';
+
+  var toneGuide = '';
+  if (critical.length) {
+    toneGuide = 'TONE: The protagonist is at their limit. ' + critical.join(' and ') + ' critically low. Writing should feel desperate, visceral, survival-mode. No hope without a miracle.';
+  } else if (low.length) {
+    toneGuide = 'TONE: The protagonist is struggling. ' + low.join(' and ') + ' dangerously low. Writing should feel strained, cautious, the jungle winning.';
+  } else if (S.resources.health > 75 && S.resources.food > 75) {
+    toneGuide = 'TONE: The protagonist is in good shape physically. Writing can have focus and momentum — driven, purposeful, alert.';
+  }
 
   var prompt = LORE + `
 
+${journalSummary()}
+
+${toneGuide}
 ${nodeContext}
 
-Previous passage: "${last.slice(0,200)}"
-Resource changes this leg: ${chStr}
-Current resources after: Gold ${S.resources.gold}, Health ${S.resources.health}, Food ${S.resources.food} /100.
-${low.length ? 'CRITICAL: ' + low.join(' and ') + ' dangerously low. Make this feel urgent.' : ''}
-${nearEnd ? 'The temple is close. Ancient carved stone visible through the canopy. Vey may already be inside.' : ''}
+Previous passage: "${last.slice(0,300)}"
+What happened this leg: ${chStr}
+${nearEnd ? 'PROXIMITY: The temple is close now. Ancient carved stone glimpsed through the canopy. Urgency is building.' : ''}
+${veryNearEnd ? 'PROXIMITY: This is almost certainly the final push. Vey may already be at the temple. Everything converges here.' : ''}
 
-Write 5-7 punchy second-person sentences.
-1. The resource changes MUST come from specific vivid story events — a badger bite, discovering Vey's supply cache, eating trail rations, finding shelter. Never mention the numbers directly, but the event must explain them.
-2. This passage must fit the node type (${chosenNode.type}): ${nodeContext.split('.')[0]}.
-3. Advance the Mara/Vey storyline with at least one clue, trace, or decision.
-4. End with one sharp sensory detail of where you are now.
-No vague mood prose. Every sentence earns its place. No markdown.`;
+Write 5-7 punchy second-person sentences. Requirements:
+1. The resource changes MUST come from specific story events — never name the numbers directly, but every change must be explained by something that physically happens (injury, eating, finding cache, etc.)
+2. The passage MUST fit the node type (${chosenNode.type}): ${nodeContext.split('.')[0]}.
+3. The protagonist's current state (injuries, hunger, morale) must color the writing — a wounded person moves differently, sees differently.
+4. Advance the Mara/Vey storyline with at least one concrete detail: a clue, a trace, a decision, a memory triggered by the environment.
+5. The writing must feel continuous with the previous passage — same journey, same body, same emotional thread.
+6. End with one sharp sensory detail of where you are now.
+No vague mood prose. No markdown. Every sentence must do work.`;
   return ai(prompt);
 }
 
@@ -327,19 +403,27 @@ async function genEnding(isDead) {
   var last = S.passages.length ? S.passages[S.passages.length-1].text : '';
   var prompt = LORE + `
 
-Final resources: Gold ${S.resources.gold}, Health ${S.resources.health}, Food ${S.resources.food}. Chores: ${S.choresCompleted}. Nodes visited: ${S.visitedNodes.length}.
-Last passage: "${last.slice(0,280)}"
+${journalSummary()}
 
-Write the ending. 6-8 sentences, second person.
+Last passage: "${last.slice(0,300)}"
+
+Write the ending. 7-9 sentences, second person. The ending MUST reflect the specific journey this protagonist took — their injuries, their choices, what they found along the way.
+
 ${isDead ?
-  `The protagonist has broken down — too hurt, too hungry, too exhausted. The jungle wins this round. Write the grief honestly: not knowing what happened to Mara, the fear Vey reaches the temple first. End with one specific moment of resolve to return.` :
-  `The protagonist has reached the Temple of Aurathen. Write the full payoff:
-- The temple interior: what it looks like, smells like
-- Finding Mara's final journal and what it reveals about what happened to her
-- The map: she hid it somewhere Vey would never look
-- The choice about what to do with it
-Make it genuinely moving. This was always a story about a sibling.`}
-No markdown.`;
+  `The protagonist has broken down — too hurt, too hungry, too exhausted to continue. The jungle wins this round.
+Write this honestly:
+- The specific moment of collapse (physical, tied to their actual resource state)
+- The grief of not knowing what happened to Mara, the fear Vey gets there first
+- One memory from the journey that won't leave them
+- End with a single line of resolve — quiet, not triumphant. They will come back.` :
+  `The protagonist has reached the Temple of Aurathen. Write the full earned payoff:
+- Approaching the temple: what it looks and smells like after this specific journey
+- Whether Vey is already there — and what that means
+- Finding Mara's final journal: what it reveals about what actually happened to her
+- The map she hid, and where
+- The choice about what to do with it — and what the protagonist actually decides
+Make it genuinely moving. This was always a story about a sibling. Honor that.`}
+No markdown. No summarizing. Write it as story.`;
   return ai(prompt);
 }
 
@@ -407,6 +491,7 @@ async function confirmChore() {
   S.resources.food   = Math.max(0, Math.min(MAX, S.resources.food   + (deltas.foodDelta   || 0)));
   S.nodePos = chosenNode.id;
   if (S.visitedNodes.indexOf(S.nodePos) < 0) S.visitedNodes.push(S.nodePos);
+  logEvent('node', chosenNode.type, deltas, S.selectedChore);
   var progressGain = (S.selectedChore && S.selectedChore.diff === 'hard') ? 2 : 1;
   S.choresCompleted++;
   var dead = Object.values(S.resources).some(function(v) { return v <= 0; });
