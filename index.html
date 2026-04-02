@@ -506,9 +506,45 @@ function changeApiKey() {
   }
 }
 
+// ── PREFETCH CACHE ─────────────────────────────────────────────────────────────
+var _prefetchedPassage = null;   // { nodeId, promise }
+var _prefetchedPaths = null;     // { fromNodeId, promise }
+
+function prefetchPassage(chosenNode) {
+  // Don't re-fetch if already in flight for this node
+  if (_prefetchedPassage && _prefetchedPassage.nodeId === chosenNode.id) return;
+  // Simulate the resource deltas so the prompt is accurate
+  var deltas = NODE_DELTAS[chosenNode.type] || {};
+  var fakeResources = {
+    gold:   Math.max(0, Math.min(MAX, S.resources.gold   + (deltas.goldDelta   || 0))),
+    health: Math.max(0, Math.min(MAX, S.resources.health + (deltas.healthDelta || 0))),
+    food:   Math.max(0, Math.min(MAX, S.resources.food   + (deltas.foodDelta   || 0)))
+  };
+  // Temporarily swap resources so genPassage uses the right values
+  var realResources = S.resources;
+  S.resources = fakeResources;
+  var p = genPassage(chosenNode);
+  S.resources = realResources;
+  _prefetchedPassage = { nodeId: chosenNode.id, promise: p };
+}
+
+function prefetchPaths() {
+  if (_prefetchedPaths && _prefetchedPaths.fromNodeId === S.nodePos) return;
+  var nextNodes = getNextNodes();
+  if (!nextNodes.length) return;
+  _prefetchedPaths = { fromNodeId: S.nodePos, promise: genPathDescriptions(nextNodes) };
+}
+
+function clearPrefetch() {
+  _prefetchedPassage = null;
+  _prefetchedPaths = null;
+}
+
 function openChore() {
   S.screen = 'chore'; S.choreStep = 0; S.selectedChore = null;
   S.selectedPath = null; S.pathOptions = []; save(); render();
+  // Start fetching path descriptions immediately in the background
+  prefetchPaths();
 }
 
 function closeChore() { S.screen = 'game'; save(); render(); }
@@ -518,22 +554,34 @@ function pickChore(idx) { S.selectedChore = CHORES[parseInt(idx)]; render(); }
 function goNext() {
   S.choreStep = 1; S.pathsLoading = true; render();
   var nextNodes = getNextNodes();
-  genPathDescriptions(nextNodes).then(function(descs) {
+  // Use prefetched promise if available, otherwise fetch now
+  var pathPromise = (_prefetchedPaths && _prefetchedPaths.fromNodeId === S.nodePos)
+    ? _prefetchedPaths.promise
+    : genPathDescriptions(nextNodes);
+  pathPromise.then(function(descs) {
     S.pathOptions = descs.map(function(d) {
       var node = NODES.find(function(n) { return n.id === d.nodeId; });
       return { nodeId: d.nodeId, type: node ? node.type : 'unknown', desc: d.desc };
     });
     S.pathsLoading = false; save(); render();
   }).catch(function() {
-    var nextNodes2 = getNextNodes();
-    S.pathOptions = nextNodes2.map(function(n) {
+    S.pathOptions = nextNodes.map(function(n) {
       return { nodeId: n.id, type: n.type, desc: NODE_TYPES[n.type].label + ' — the path ahead.' };
     });
     S.pathsLoading = false; save(); render();
   });
 }
 
-function pickPath(i) { S.selectedPath = parseInt(i); render(); }
+function pickPath(i) {
+  S.selectedPath = parseInt(i);
+  // Start generating the passage immediately in the background
+  var chosen = S.pathOptions[S.selectedPath];
+  if (chosen) {
+    var chosenNode = NODES.find(function(n) { return n.id === chosen.nodeId; });
+    if (chosenNode) prefetchPassage(chosenNode);
+  }
+  render();
+}
 
 async function confirmChore() {
   var chosen = S.pathOptions[S.selectedPath];
@@ -550,11 +598,18 @@ async function confirmChore() {
   S.choresCompleted++;
   var dead = Object.values(S.resources).some(function(v) { return v <= 0; });
   var won = chosenNode.type === 'temple';
-  S.screen = 'game'; S.storyLoading = true; S.sceneImageUrl = ''; S.sceneImageLoading = false;
+  S.screen = 'game'; S.storyLoading = false; S.sceneImageUrl = ''; S.sceneImageLoading = false;
   S.choreStep = 0; S.selectedChore = null; S.selectedPath = null; S.pathOptions = [];
+  // Start arrival effects immediately — passage generates in parallel
   save(); render();
+  setTimeout(function() { showArrival(chosenNode.type); }, 50);
+  setTimeout(function() { setMoodTint(chosenNode.type); }, 200);
   try {
-    var t = await genPassage(chosenNode);
+    var passagePromise = (_prefetchedPassage && _prefetchedPassage.nodeId === chosenNode.id)
+      ? _prefetchedPassage.promise
+      : genPassage(chosenNode);
+    clearPrefetch();
+    var t = await passagePromise;
     S.passages.push({ chapter: CHAPTERS[Math.min(S.passages.length, CHAPTERS.length-1)], text: t });
   } catch(e) {
     S.passages.push({ chapter: CHAPTERS[Math.min(S.passages.length, CHAPTERS.length-1)], text: 'You push on through the jungle.' });
@@ -566,25 +621,12 @@ async function confirmChore() {
     catch(e) { S.endingText = dead ? 'The jungle has you this time. But you will come back.' : 'The temple doors open. Mara\'s journal is on the altar, open to the last page.'; }
     S.endLoading = false; save(); render();
   } else {
-    var lp = S.passages[S.passages.length-1];
-    if (lp) genSceneImage(lp.text, chosenNode.type).then(function(url) {
-      S.sceneImageUrl = url || ''; S.sceneImageLoading = false;
-      save(); if (S.screen === 'game') render();
-    });
-    else S.sceneImageLoading = false;
     save(); render();
-    // Arrival effects — deferred so render() DOM is settled first
-    setTimeout(function() {
-      showArrival(chosenNode.type);
-    }, 50);
-    setTimeout(function() {
-      setMoodTint(chosenNode.type);
-    }, 200);
+    // Typewrite the story as soon as it's rendered
     setTimeout(function() {
       var lp2 = S.passages[S.passages.length-1];
-      console.log('Firing typewriter, passage:', lp2 ? lp2.text.slice(0,40) : 'none');
       if (lp2) typewriterStory(lp2.text);
-    }, 900);
+    }, 100);
     showToast('Chore done. The path opens.');
   }
 }
