@@ -445,7 +445,8 @@ Each paragraph should do one thing fully before moving to the next. Don't rush. 
 
 Requirements:
 1. Open paragraph: a physical sensation or action that drops the reader directly into the scene. Body first, always. Establish where we are and what the body feels.
-2. Middle paragraphs: let the scene unfold naturally. Resource changes come from specific story events — never state numbers, but every change is explained by something that physically happens. The node type (${chosenNode.type}) shapes what happens: ${nodeContext.split('.')[0]}. Interior monologue can cut in. Memories of Mara can surface. The jungle reacts.
+2. Middle paragraphs: let the scene unfold naturally. EVERY resource change must be explained by a specific story event — the reader should finish knowing exactly why each resource changed:
+${deltas.goldDelta > 0 ? '   - Gold gained ('+deltas.goldDelta+'): something of value was found, taken, or earned. Name what it was and how.' : ''}${deltas.goldDelta < 0 ? '   - Gold lost ('+Math.abs(deltas.goldDelta)+'): something was spent, destroyed, or taken. Name what happened.' : ''}${deltas.healthDelta > 0 ? '   - Vitality recovered ('+deltas.healthDelta+'): the body healed or rested somehow. Show it.' : ''}${deltas.healthDelta < 0 ? '   - Vitality lost ('+Math.abs(deltas.healthDelta)+'): the body took damage or was pushed hard. Show the specific moment it happened.' : ''}${deltas.foodDelta > 0 ? '   - Provisions gained ('+deltas.foodDelta+'): food was found. Show where and how.' : ''}${deltas.foodDelta < 0 ? '   - Provisions consumed ('+Math.abs(deltas.foodDelta)+'): food was eaten or lost. Show the moment.' : ''}
 3. Throughout: the protagonist's physical state colors everything — wounded people move differently, think differently, notice different things. Let this bleed into the prose.
 4. Advance the Mara/Vey thread with one concrete detail: a clue, a trace, a memory triggered by the environment, a decision made.
 5. Feel continuous with the previous passage — same body, same grief, same emotional thread. No hard resets.
@@ -597,7 +598,7 @@ async function confirmChore() {
     // Arrival flash started 3-5s ago so it's already fading — just show immediately
     setCameraToNode(chosenNode.id, 2.0, 'main-map', true);
     setTimeout(function() {
-      if (latest) showJournal(latest.chapter, latest.text, false);
+      if (latest) showJournal(latest.chapter, latest.text, false, deltas);
     }, 500);
     showToast('Chore done. The path opens.');
   }
@@ -1106,18 +1107,30 @@ function setCameraToFrameNodes(nodeIds, canvasId, smooth) {
 }
 
 
-function showJournal(chapter, text, isLoading) {
+function showJournal(chapter, text, isLoading, deltas) {
   var card = document.getElementById('journal-card');
   if (!card) return;
   var chapterEl = card.querySelector('.journal-chapter');
   var textEl = card.querySelector('.journal-text');
+  var deltaEl = card.querySelector('.journal-deltas');
   if (chapterEl) chapterEl.textContent = '📖 ' + (chapter || 'The Expedition');
+  if (deltaEl) {
+    if (deltas && !isLoading) {
+      var parts = [];
+      if (deltas.goldDelta)   parts.push('<span style="color:' + (deltas.goldDelta > 0 ? 'var(--green)' : 'var(--rose)') + '">' + (deltas.goldDelta > 0 ? '+' : '') + deltas.goldDelta + ' Gold</span>');
+      if (deltas.healthDelta) parts.push('<span style="color:' + (deltas.healthDelta > 0 ? 'var(--green)' : 'var(--rose)') + '">' + (deltas.healthDelta > 0 ? '+' : '') + deltas.healthDelta + ' Vitality</span>');
+      if (deltas.foodDelta)   parts.push('<span style="color:' + (deltas.foodDelta > 0 ? 'var(--green)' : 'var(--rose)') + '">' + (deltas.foodDelta > 0 ? '+' : '') + deltas.foodDelta + ' Provisions</span>');
+      deltaEl.innerHTML = parts.join(' &nbsp;·&nbsp; ');
+      deltaEl.style.display = parts.length ? 'block' : 'none';
+    } else {
+      deltaEl.style.display = 'none';
+    }
+  }
   if (textEl) {
     if (isLoading) {
       textEl.innerHTML = '<div class="journal-loading"><span class="spin">🌀</span> Writing…</div>';
     } else {
       textEl.innerHTML = '';
-      // Word-by-word typewriter
       var words = (text || '').split(' ');
       var delay = 0;
       var chunkSize = 3;
@@ -1350,6 +1363,7 @@ function rGame() {
     +   '<div id="journal-overlay">'
     +     '<div id="journal-card">'
     +       '<span class="journal-chapter">📖 ' + hx(latest ? latest.chapter : 'The Expedition Begins') + '</span>'
+    +       '<div class="journal-deltas" style="display:none;font-family:\'Fredoka\',sans-serif;font-size:.78rem;letter-spacing:.04em;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(80,45,10,0.15)"></div>'
     +       '<div class="journal-text"></div>'
     +     '</div>'
     +   '</div>'
