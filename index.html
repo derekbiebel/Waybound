@@ -115,7 +115,7 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .paths-loading{text-align:center;padding:36px 0;color:var(--text2);font-style:italic}
 /* Map canvas — full unified surface */
 .map-canvas-wrap{position:relative;background:var(--card);border:3px solid var(--border);border-radius:10px;margin-bottom:14px;box-shadow:0 4px 0 var(--border2)}
-.map-canvas-wrap canvas{display:block;width:100%;touch-action:none;border-radius:7px}
+.map-canvas-wrap canvas{display:block;width:100%;touch-action:pan-y;border-radius:7px}
 /* Journal overlay — sits on top of map canvas */
 #journal-overlay{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:flex-end;justify-content:center;pointer-events:none;z-index:10}
 #journal-card{width:92%;max-height:62%;background:linear-gradient(160deg,rgba(253,246,232,0.97) 0%,rgba(242,228,196,0.97) 100%);border:2px solid rgba(90,55,18,0.35);border-radius:8px 8px 4px 4px;box-shadow:0 -4px 24px rgba(30,10,0,0.22),inset 0 1px 0 rgba(255,245,210,0.8);padding:16px 18px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;pointer-events:none;opacity:0;visibility:hidden;-webkit-transform:translateY(30px);transform:translateY(30px);transition:opacity 0.5s ease,transform 0.5s ease;-webkit-transition:opacity 0.5s ease,-webkit-transform 0.5s ease;margin-bottom:12px;position:relative;-webkit-tap-highlight-color:transparent}
@@ -209,12 +209,12 @@ const CONNECTIONS = [
   [0,1],[0,2],
   [1,3],[1,4],[2,4],[2,5],
   [3,6],[3,7],[4,7],[4,8],[5,8],[5,9],
-  [6,10],[6,11],[7,11],[7,12],[8,12],[8,13],[9,13],
-  [10,14],[10,15],[11,15],[11,16],[12,16],[12,17],[13,17],
-  [14,18],[14,19],[15,19],[15,20],[16,20],[16,21],[17,21],
-  [18,22],[18,23],[19,23],[19,24],[20,24],[20,25],[21,25],
-  [22,26],[22,27],[23,27],[23,28],[24,28],[24,29],[25,29],
-  [26,30],[27,30],[28,30],[29,30],
+  [6,10],[6,11],[7,11],[7,12],[8,12],[8,13],[9,12],[9,13],
+  [10,14],[10,15],[11,15],[11,16],[12,16],[12,17],[13,16],[13,17],
+  [14,18],[14,19],[15,19],[15,20],[16,20],[16,21],[17,20],[17,21],
+  [18,22],[18,23],[19,23],[19,24],[20,24],[20,25],[21,24],[21,25],
+  [22,26],[22,27],[23,27],[23,28],[24,28],[24,29],[25,28],[25,29],
+  [26,30],[26,27],[27,30],[27,28],[28,30],[28,29],[29,30],[29,28],
 ]
 const NODE_TYPES = {"start": {"icon": "🏡", "label": "Home", "color": "#5a8f4a", "bg": "#edf7e8"}, "encounter": {"icon": "⚔️", "label": "Encounter", "color": "#c04050", "bg": "#fde8ea"}, "rest": {"icon": "🏕️", "label": "Rest Stop", "color": "#5b9fd4", "bg": "#dff0fa"}, "unknown": {"icon": "❓", "label": "Unknown", "color": "#8b6fbf", "bg": "#f0eaf8"}, "elite": {"icon": "💀", "label": "Elite", "color": "#7a1a1a", "bg": "#fde8ea"}, "event": {"icon": "📜", "label": "Event", "color": "#e8a830", "bg": "#fef3d0"}, "temple": {"icon": "🏛️", "label": "Temple", "color": "#e8a830", "bg": "#fef3d0"}};
 const NODE_DELTAS = {"encounter": {"goldDelta": 15, "healthDelta": -18, "foodDelta": -8}, "rest": {"goldDelta": 0, "healthDelta": 20, "foodDelta": -20}, "unknown": {"goldDelta": 8, "healthDelta": -8, "foodDelta": -10}, "elite": {"goldDelta": 28, "healthDelta": -28, "foodDelta": -6}, "event": {"goldDelta": 5, "healthDelta": 5, "foodDelta": -8}, "start": {"goldDelta": 0, "healthDelta": 0, "foodDelta": 0}, "temple": {"goldDelta": 0, "healthDelta": 0, "foodDelta": 0}};
