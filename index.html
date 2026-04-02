@@ -118,9 +118,9 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .map-canvas-wrap canvas{display:block;width:100%;touch-action:none;border-radius:7px}
 /* Journal overlay — sits on top of map canvas */
 #journal-overlay{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:flex-end;justify-content:center;pointer-events:none;z-index:10}
-#journal-card{width:92%;max-height:62%;background:linear-gradient(160deg,rgba(253,246,232,0.97) 0%,rgba(242,228,196,0.97) 100%);border:2px solid rgba(90,55,18,0.35);border-radius:8px 8px 4px 4px;box-shadow:0 -4px 24px rgba(30,10,0,0.22),inset 0 1px 0 rgba(255,245,210,0.8);padding:16px 18px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;pointer-events:none;opacity:0;-webkit-transform:translateY(30px);transform:translateY(30px);transition:opacity 0.5s ease,transform 0.5s ease;-webkit-transition:opacity 0.5s ease,-webkit-transform 0.5s ease;margin-bottom:12px;position:relative;-webkit-tap-highlight-color:transparent}
+#journal-card{width:92%;max-height:62%;background:linear-gradient(160deg,rgba(253,246,232,0.97) 0%,rgba(242,228,196,0.97) 100%);border:2px solid rgba(90,55,18,0.35);border-radius:8px 8px 4px 4px;box-shadow:0 -4px 24px rgba(30,10,0,0.22),inset 0 1px 0 rgba(255,245,210,0.8);padding:16px 18px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;pointer-events:none;opacity:0;visibility:hidden;-webkit-transform:translateY(30px);transform:translateY(30px);transition:opacity 0.5s ease,transform 0.5s ease;-webkit-transition:opacity 0.5s ease,-webkit-transform 0.5s ease;margin-bottom:12px;position:relative;-webkit-tap-highlight-color:transparent}
 #journal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,var(--green) 0,var(--green) 6px,var(--amber) 6px,var(--amber) 12px,#5b9fd4 12px,#5b9fd4 18px,var(--rose) 18px,var(--rose) 24px);opacity:0.45;border-radius:6px 6px 0 0}
-#journal-card.visible{opacity:1;-webkit-transform:translateY(0);transform:translateY(0);pointer-events:all}
+#journal-card.visible{opacity:1;visibility:visible;-webkit-transform:translateY(0);transform:translateY(0);pointer-events:all}
 .journal-chapter{font-size:.62rem;text-transform:uppercase;letter-spacing:.16em;color:var(--purple);display:block;margin-bottom:10px;font-family:'Fredoka',sans-serif}
 .journal-text{font-size:.95rem;line-height:1.9;color:var(--text3);font-family:'Nunito',sans-serif}
 .journal-loading{display:flex;align-items:center;gap:10px;color:var(--text2);font-style:italic;font-size:.9rem}
@@ -686,7 +686,8 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
   var W = canvas.offsetWidth;
   var rowH = 80;
   var fullMapH = NUM_ROWS * rowH + 52;
-  var H = fullMapH; // canvas is always full map height
+  // Main map: full height. Chore map: use its own set height
+  var H = (canvasId === 'main-map') ? fullMapH : (canvas.offsetHeight || 220);
   if (!W || W < 10) { requestAnimationFrame(function() { drawSpireMap(canvasId, highlightNextNodes); }); return; }
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
     canvas.width = Math.round(W * dpr);
@@ -702,7 +703,12 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
   // World space dimensions
   var fullMapH = NUM_ROWS * rowH + 52;
 
-  // Default camera: show full map
+  // Camera transform: world point cam.{x,y} appears at canvas center (H/2)
+  // Initialize on first draw if not set
+  if (_cam.x === 0 && _cam.y === 0) {
+    _cam.x = W/2; _cam.y = fullMapH/2; _cam.zoom = 1.0;
+    _camTgt.x = W/2; _camTgt.y = fullMapH/2; _camTgt.zoom = 1.0;
+  }
   if (_snap) {
     _cam.x = _camTgt.x; _cam.y = _camTgt.y; _cam.zoom = _camTgt.zoom;
     _snap = false;
@@ -712,8 +718,6 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
     _cam.y    += (_camTgt.y    - _cam.y)    * lerp;
     _cam.zoom += (_camTgt.zoom - _cam.zoom) * lerp;
   }
-
-  // Camera transform: world point _cam.{x,y} appears at canvas center
   ctx.save();
   ctx.translate(W/2 - _cam.x * _cam.zoom, H/2 - _cam.y * _cam.zoom);
   ctx.scale(_cam.zoom, _cam.zoom);
@@ -1135,8 +1139,8 @@ function showJournal(chapter, text, isLoading) {
     }
   }
   card.classList.add('visible');
-  // Force Safari to register the style change
   card.style.opacity = '1';
+  card.style.visibility = 'visible';
   card.style.pointerEvents = 'all';
   card.style.webkitTransform = 'translateY(0)';
   card.style.transform = 'translateY(0)';
@@ -1147,6 +1151,7 @@ function hideJournal() {
   if (!card) return;
   card.classList.remove('visible');
   card.style.opacity = '0';
+  card.style.visibility = 'hidden';
   card.style.pointerEvents = 'none';
   card.style.webkitTransform = 'translateY(30px)';
   card.style.transform = 'translateY(30px)';
@@ -1261,10 +1266,10 @@ function render() {
     app.innerHTML = rChore();
     if (S.choreStep === 1 && !S.pathsLoading) {
       var nextIds = S.pathOptions.map(function(p) { return p.nodeId; });
-      // Only highlight selected path, or none if nothing selected
       var selectedIds = (S.selectedPath !== null && S.pathOptions[S.selectedPath])
         ? [S.pathOptions[S.selectedPath].nodeId]
         : [];
+      console.log('CHORE render: selectedPath=', S.selectedPath, 'selectedIds=', selectedIds, 'nextIds=', nextIds);
       setCameraToFrameNodes([S.nodePos].concat(nextIds), 'chore-map', false);
       startSpireMap('chore-map', selectedIds);
     } else {
