@@ -216,9 +216,9 @@ const CONNECTIONS = [
   [22,26],[22,27],[23,27],[23,28],[24,28],[24,29],[25,28],[25,29],
   [26,30],[26,27],[27,30],[27,28],[28,30],[28,29],[29,30],[29,28],
 ]
-const NODE_TYPES = {"start": {"icon": "🏡", "label": "Home", "color": "#5a8f4a", "bg": "#edf7e8"}, "encounter": {"icon": "⚔️", "label": "Encounter", "color": "#c04050", "bg": "#fde8ea"}, "rest": {"icon": "🏕️", "label": "Rest Stop", "color": "#5b9fd4", "bg": "#dff0fa"}, "unknown": {"icon": "❓", "label": "Unknown", "color": "#8b6fbf", "bg": "#f0eaf8"}, "elite": {"icon": "💀", "label": "Elite", "color": "#7a1a1a", "bg": "#fde8ea"}, "event": {"icon": "📜", "label": "Event", "color": "#e8a830", "bg": "#fef3d0"}, "temple": {"icon": "🏛️", "label": "Temple", "color": "#e8a830", "bg": "#fef3d0"}};
+const NODE_TYPES = {"start": {"icon": "🏡", "label": "Home", "color": "#5a8f4a", "bg": "#edf7e8"}, "encounter": {"icon": "⚔️", "label": "Encounter", "color": "#c04050", "bg": "#fde8ea"}, "rest": {"icon": "🏕️", "label": "Rest Stop", "color": "#5b9fd4", "bg": "#dff0fa"}, "unknown": {"icon": "❓", "label": "Unknown", "color": "#8b6fbf", "bg": "#f0eaf8"}, "elite": {"icon": "💀", "label": "Conquest", "color": "#7a1a1a", "bg": "#fde8ea"}, "event": {"icon": "📜", "label": "Event", "color": "#e8a830", "bg": "#fef3d0"}, "temple": {"icon": "🏛️", "label": "Temple", "color": "#e8a830", "bg": "#fef3d0"}};
 const NODE_DELTAS = {"encounter": {"goldDelta": 15, "healthDelta": -18, "foodDelta": -8}, "rest": {"goldDelta": 0, "healthDelta": 20, "foodDelta": -20}, "unknown": {"goldDelta": 8, "healthDelta": -8, "foodDelta": -10}, "elite": {"goldDelta": 28, "healthDelta": -28, "foodDelta": -6}, "event": {"goldDelta": 5, "healthDelta": 5, "foodDelta": -8}, "start": {"goldDelta": 0, "healthDelta": 0, "foodDelta": 0}, "temple": {"goldDelta": 0, "healthDelta": 0, "foodDelta": 0}};
-const NODE_PROMPTS = {"encounter": "This is an ENCOUNTER node — dangerous, high stakes. The protagonist faces a direct physical challenge: a territorial animal, treacherous terrain, Vey's guards, a sudden storm. High health cost likely. Gold reward possible if they overcome it.", "rest": "This is a REST node — a moment to recover. The protagonist finds shelter, tends wounds, eats a proper meal. Health recovers but food is consumed. Slower, safer, personal.", "unknown": "This is an UNKNOWN node — anything could happen. The protagonist investigates something unexpected: strange sounds, odd markings, an abandoned campsite. Outcome genuinely unpredictable.", "elite": "This is an ELITE node — very dangerous, very rewarding. The protagonist faces something truly threatening: a large predator, Vey himself, a near-fatal trap. Serious health cost but significant gold or information reward.", "event": "This is an EVENT node — a story moment tied to Mara or Vey. The protagonist discovers a clue, a memory, a choice. This must advance the central mystery meaningfully.", "temple": "This is the TEMPLE — the journey ends here."};
+const NODE_PROMPTS = {"encounter": "This is an ENCOUNTER node — dangerous, high stakes. The protagonist faces a direct physical challenge: a territorial animal, treacherous terrain, Vey's guards, a sudden storm. High health cost likely. Gold reward possible if they overcome it.", "rest": "This is a REST node — a moment to recover. The protagonist finds shelter, tends wounds, eats a proper meal. Health recovers but food is consumed. Slower, safer, personal.", "unknown": "This is an UNKNOWN node — anything could happen. The protagonist investigates something unexpected: strange sounds, odd markings, an abandoned campsite. Outcome genuinely unpredictable.", "elite": "This is a CONQUEST node — the hardest path, the biggest reward. The protagonist faces something truly threatening: a large predator, Vey himself, a near-fatal trap. Serious health cost but significant gold or information reward.", "event": "This is an EVENT node — a story moment tied to Mara or Vey. The protagonist discovers a clue, a memory, a choice. This must advance the central mystery meaningfully.", "temple": "This is the TEMPLE — the journey ends here."};
 const CHAPTERS = ["The Journal Page", "The First Steps", "Deeper In", "The River", "Old Paths", "What She Left", "Signs of Vey", "The Canopy", "Almost There", "Ancient Stone", "The Temple Gate"];
 const NUM_ROWS = 10;
 const COLS_PER_ROW = 4;
@@ -382,16 +382,17 @@ Last passage: "${last.slice(0,250)}"
 
 The protagonist must now choose between these routes: ${nodeDescs}
 
-Write a vivid 20-30 word description for each path. The descriptions MUST:
-- Reflect the protagonist's current physical/emotional state (injured? hungry? running out of time?)
-- Feel like they follow naturally from the last passage
-- Implicitly signal the risk/reward:
-  - Encounter: danger, something blocking the way, conflict
-  - Rest: shelter, quiet, recovery — but time lost
-  - Unknown: something strange, doesn't add up, could go either way
-  - Elite: serious threat, but something valuable is clearly nearby
-  - Event: a trace of Mara or Vey, a story clue, a personal moment
-- Never repeat descriptions from earlier in this run
+Write a vivid 25-35 word description for each path. Use specific, literal detail — what the protagonist sees, smells, hears, feels. Each description should make the resource trade-off legible through that detail, without stating it directly.
+
+What each node type's description should make the player understand through its imagery:
+- ENCOUNTER: You will spend health and energy here. You might gain gold or supplies from whatever you overcome. Show something that signals conflict, effort, cost — and a reason it's worth it.
+- REST STOP: You will recover health and find food. You will lose time. Show shelter, warmth, a place to breathe — but with urgency underneath. Vey is moving while you rest.
+- UNKNOWN: Genuinely ambiguous — the detail you show could mean good or bad fortune. Show something real but unreadable. The player gambles.
+- ELITE: Serious danger, serious reward. Show both clearly — something threatening AND something valuable in the same image. The player should understand this is the highest-stakes choice.
+- EVENT: No physical cost. A story gain — a clue about Mara, a trace of Vey, a revelation. Show something personal that matters to the protagonist.
+
+Every detail must earn its place. The player should finish reading and know what kind of trade they're making.
+Never repeat descriptions from earlier in this run. Reflect the protagonist's current state.
 
 Reply ONLY with raw JSON array, no markdown:
 [{"nodeId":${nextNodes[0].id},"desc":"..."},{"nodeId":${nextNodes[1] ? nextNodes[1].id : nextNodes[0].id},"desc":"..."}${nextNodes[2] ? ',{"nodeId":' + nextNodes[2].id + ',"desc":"..."}' : ''}]`;
