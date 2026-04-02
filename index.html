@@ -592,13 +592,18 @@ async function confirmChore() {
   } else {
     save();
     var latest = S.passages[S.passages.length-1];
-    // After arrival flash fades, zoom in and show journal — no full re-render needed
+    // Update journal with new passage — it may already be open showing loading state
     setTimeout(function() {
       setCameraToNode(chosenNode.id, 1.8);
       setTimeout(function() {
         if (latest) showJournal(latest.chapter, latest.text, false);
       }, 700);
     }, 2600);
+    // Also update immediately if journal is already visible (passage loaded fast)
+    var card = document.getElementById('journal-card');
+    if (card && card.classList.contains('visible') && latest) {
+      showJournal(latest.chapter, latest.text, false);
+    }
     showToast('Chore done. The path opens.');
   }
 }
@@ -693,6 +698,7 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
   }
   var ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // reset to DPR scale
+  ctx.clearRect(0, 0, W, H);
   var now = Date.now();
 
   // Lerp camera toward target
@@ -1175,10 +1181,12 @@ function render() {
       animateMarkerTravel('main-map', S.prevNodePos, S.nodePos, function() {
         S.prevNodePos = null;
       });
-      // Show journal after camera settles
+      // Show journal after camera settles — loading state first, content when ready
       setTimeout(function() {
         var latest = S.passages.length ? S.passages[S.passages.length-1] : null;
-        if (latest && !S.storyLoading) {
+        if (S.storyLoading) {
+          showJournal('Writing…', '', true);
+        } else if (latest) {
           showJournal(latest.chapter, latest.text, false);
         }
       }, 800);
