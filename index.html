@@ -113,9 +113,19 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .path-node-type{font-family:'Fredoka',sans-serif;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
 .path-node-desc{font-size:.9rem;line-height:1.55;color:var(--text3)}
 .paths-loading{text-align:center;padding:36px 0;color:var(--text2);font-style:italic}
-/* Map canvas */
-.map-canvas-wrap{background:var(--card);border:3px solid var(--border);border-radius:10px;margin-bottom:14px;box-shadow:0 4px 0 var(--border2);overflow:hidden}
+/* Map canvas — full unified surface */
+.map-canvas-wrap{position:relative;background:var(--card);border:3px solid var(--border);border-radius:10px;margin-bottom:14px;box-shadow:0 4px 0 var(--border2);overflow:hidden}
 .map-canvas-wrap canvas{display:block;width:100%}
+/* Journal overlay — sits on top of map canvas */
+#journal-overlay{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:flex-end;justify-content:center;pointer-events:none;z-index:10}
+#journal-card{width:92%;max-height:62%;background:linear-gradient(160deg,rgba(253,246,232,0.97) 0%,rgba(242,228,196,0.97) 100%);border:2px solid rgba(90,55,18,0.35);border-radius:8px 8px 4px 4px;box-shadow:0 -4px 24px rgba(30,10,0,0.22),inset 0 1px 0 rgba(255,245,210,0.8);padding:16px 18px 20px;overflow-y:auto;pointer-events:none;opacity:0;transform:translateY(30px);transition:opacity 0.5s ease,transform 0.5s ease;margin-bottom:12px;position:relative}
+#journal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,var(--green) 0,var(--green) 6px,var(--amber) 6px,var(--amber) 12px,#5b9fd4 12px,#5b9fd4 18px,var(--rose) 18px,var(--rose) 24px);opacity:0.45;border-radius:6px 6px 0 0}
+#journal-card.visible{opacity:1;transform:translateY(0);pointer-events:all}
+.journal-chapter{font-size:.62rem;text-transform:uppercase;letter-spacing:.16em;color:var(--purple);display:block;margin-bottom:10px;font-family:'Fredoka',sans-serif}
+.journal-text{font-size:.95rem;line-height:1.9;color:var(--text3);font-family:'Nunito',sans-serif}
+.journal-loading{display:flex;align-items:center;gap:10px;color:var(--text2);font-style:italic;font-size:.9rem}
+/* Fade bottom of map into background */
+.map-fade{position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,rgba(253,246,232,0.6));pointer-events:none;z-index:5}
 /* Map legend */
 .map-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px;justify-content:center;padding:6px 0;border-top:1px solid rgba(90,52,18,0.18);border-bottom:1px solid rgba(90,52,18,0.18)}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:.68rem;font-family:'Georgia',serif;font-style:italic;color:rgba(55,28,8,0.72)}
@@ -507,44 +517,13 @@ function changeApiKey() {
 }
 
 // ── PREFETCH CACHE ─────────────────────────────────────────────────────────────
-var _prefetchedPassage = null;   // { nodeId, promise }
-var _prefetchedPaths = null;     // { fromNodeId, promise }
-
-function prefetchPassage(chosenNode) {
-  // Don't re-fetch if already in flight for this node
-  if (_prefetchedPassage && _prefetchedPassage.nodeId === chosenNode.id) return;
-  // Simulate the resource deltas so the prompt is accurate
-  var deltas = NODE_DELTAS[chosenNode.type] || {};
-  var fakeResources = {
-    gold:   Math.max(0, Math.min(MAX, S.resources.gold   + (deltas.goldDelta   || 0))),
-    health: Math.max(0, Math.min(MAX, S.resources.health + (deltas.healthDelta || 0))),
-    food:   Math.max(0, Math.min(MAX, S.resources.food   + (deltas.foodDelta   || 0)))
-  };
-  // Temporarily swap resources so genPassage uses the right values
-  var realResources = S.resources;
-  S.resources = fakeResources;
-  var p = genPassage(chosenNode);
-  S.resources = realResources;
-  _prefetchedPassage = { nodeId: chosenNode.id, promise: p };
-}
-
-function prefetchPaths() {
-  if (_prefetchedPaths && _prefetchedPaths.fromNodeId === S.nodePos) return;
-  var nextNodes = getNextNodes();
-  if (!nextNodes.length) return;
-  _prefetchedPaths = { fromNodeId: S.nodePos, promise: genPathDescriptions(nextNodes) };
-}
-
-function clearPrefetch() {
-  _prefetchedPassage = null;
-  _prefetchedPaths = null;
-}
+// (removed — caused stale context issues)
 
 function openChore() {
+  hideJournal();
+  resetCamera();
   S.screen = 'chore'; S.choreStep = 0; S.selectedChore = null;
   S.selectedPath = null; S.pathOptions = []; save(); render();
-  // Start fetching path descriptions immediately in the background
-  prefetchPaths();
 }
 
 function closeChore() { S.screen = 'game'; save(); render(); }
@@ -554,17 +533,15 @@ function pickChore(idx) { S.selectedChore = CHORES[parseInt(idx)]; render(); }
 function goNext() {
   S.choreStep = 1; S.pathsLoading = true; render();
   var nextNodes = getNextNodes();
-  // Use prefetched promise if available, otherwise fetch now
-  var pathPromise = (_prefetchedPaths && _prefetchedPaths.fromNodeId === S.nodePos)
-    ? _prefetchedPaths.promise
-    : genPathDescriptions(nextNodes);
-  pathPromise.then(function(descs) {
+  genPathDescriptions(nextNodes).then(function(descs) {
+    console.log('Path descs received:', JSON.stringify(descs).slice(0,120));
     S.pathOptions = descs.map(function(d) {
       var node = NODES.find(function(n) { return n.id === d.nodeId; });
       return { nodeId: d.nodeId, type: node ? node.type : 'unknown', desc: d.desc };
     });
     S.pathsLoading = false; save(); render();
-  }).catch(function() {
+  }).catch(function(e) {
+    console.log('Path descs FAILED:', e);
     S.pathOptions = nextNodes.map(function(n) {
       return { nodeId: n.id, type: n.type, desc: NODE_TYPES[n.type].label + ' — the path ahead.' };
     });
@@ -574,12 +551,6 @@ function goNext() {
 
 function pickPath(i) {
   S.selectedPath = parseInt(i);
-  // Start generating the passage immediately in the background
-  var chosen = S.pathOptions[S.selectedPath];
-  if (chosen) {
-    var chosenNode = NODES.find(function(n) { return n.id === chosen.nodeId; });
-    if (chosenNode) prefetchPassage(chosenNode);
-  }
   render();
 }
 
@@ -594,24 +565,22 @@ async function confirmChore() {
   S.nodePos = chosenNode.id;
   if (S.visitedNodes.indexOf(S.nodePos) < 0) S.visitedNodes.push(S.nodePos);
   logEvent('node', chosenNode.type, deltas, S.selectedChore);
-  var progressGain = (S.selectedChore && S.selectedChore.diff === 'hard') ? 2 : 1;
   S.choresCompleted++;
   var dead = Object.values(S.resources).some(function(v) { return v <= 0; });
   var won = chosenNode.type === 'temple';
-  S.screen = 'game'; S.storyLoading = false; S.sceneImageUrl = ''; S.sceneImageLoading = false;
+  S.screen = 'game'; S.storyLoading = true; S.sceneImageUrl = ''; S.sceneImageLoading = false;
   S.choreStep = 0; S.selectedChore = null; S.selectedPath = null; S.pathOptions = [];
-  // Start arrival effects immediately — passage generates in parallel
   save(); render();
+  // Fire arrival effects
   setTimeout(function() { showArrival(chosenNode.type); }, 50);
   setTimeout(function() { setMoodTint(chosenNode.type); }, 200);
+  // Await passage
   try {
-    var passagePromise = (_prefetchedPassage && _prefetchedPassage.nodeId === chosenNode.id)
-      ? _prefetchedPassage.promise
-      : genPassage(chosenNode);
-    clearPrefetch();
-    var t = await passagePromise;
+    var t = await genPassage(chosenNode);
+    console.log('genPassage result:', t ? t.slice(0, 80) : 'EMPTY');
     S.passages.push({ chapter: CHAPTERS[Math.min(S.passages.length, CHAPTERS.length-1)], text: t });
   } catch(e) {
+    console.log('genPassage ERROR:', e);
     S.passages.push({ chapter: CHAPTERS[Math.min(S.passages.length, CHAPTERS.length-1)], text: 'You push on through the jungle.' });
   }
   S.storyLoading = false;
@@ -622,11 +591,16 @@ async function confirmChore() {
     S.endLoading = false; save(); render();
   } else {
     save(); render();
-    // Typewrite the story as soon as it's rendered
+    // After arrival flash fades, zoom into node and show journal
     setTimeout(function() {
-      var lp2 = S.passages[S.passages.length-1];
-      if (lp2) typewriterStory(lp2.text);
-    }, 100);
+      setCameraToNode(chosenNode.id, 1.8);
+      var latest = S.passages[S.passages.length-1];
+      if (latest) {
+        setTimeout(function() {
+          showJournal(latest.chapter, latest.text, false);
+        }, 600);
+      }
+    }, 2600);
     showToast('Chore done. The path opens.');
   }
 }
@@ -693,6 +667,11 @@ var mapRaf = null;
 var _mapBgImg = null;
 var _mapBgLoaded = false;
 
+// Camera state for zoom/pan
+var _cam = { x: 0.5, y: 0.5, zoom: 1.0 };         // normalized 0-1
+var _camTarget = { x: 0.5, y: 0.5, zoom: 1.0 };
+var _camAnimating = false;
+
 (function() {
   var img = new Image();
   img.onload = function() { _mapBgImg = img; _mapBgLoaded = true; };
@@ -704,11 +683,24 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
   var canvas = document.getElementById(canvasId);
   if (!canvas) return;
   var W = canvas.offsetWidth;
+  var H = canvas.offsetHeight || (NUM_ROWS * 80 + 52);
   if (!W || W < 10) { requestAnimationFrame(function() { drawSpireMap(canvasId, highlightNextNodes); }); return; }
-  var rowH = 80, H = NUM_ROWS * rowH + 52;
+  var rowH = 80;
   if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
   var ctx = canvas.getContext('2d');
   var now = Date.now();
+
+  // Lerp camera toward target
+  var lerp = 0.06;
+  _cam.x    += (_camTarget.x    - _cam.x)    * lerp;
+  _cam.y    += (_camTarget.y    - _cam.y)    * lerp;
+  _cam.zoom += (_camTarget.zoom - _cam.zoom) * lerp;
+
+  // Apply camera: translate so target point is centered, then scale
+  ctx.save();
+  var cx = _cam.x * W, cy = _cam.y * H;
+  ctx.translate(W/2 - cx * _cam.zoom, H/2 - cy * _cam.zoom);
+  ctx.scale(_cam.zoom, _cam.zoom);
 
   // ── BACKGROUND ────────────────────────────────────────────────────────────────
   if (_mapBgImg && _mapBgLoaded) {
@@ -1017,6 +1009,70 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
       ctx.strokeStyle = 'rgba(80,15,5,0.60)'; ctx.lineWidth = 0.8; ctx.stroke();
     }
   }
+  ctx.restore(); // close camera transform
+}
+
+function setCameraToNode(nodeId, zoom) {
+  var node = NODES[nodeId];
+  if (!node) return;
+  // We need canvas dimensions to compute normalized position
+  var canvas = document.getElementById('main-map');
+  var W = canvas ? canvas.offsetWidth : 380;
+  var rowH = 80, H = NUM_ROWS * rowH + 52;
+  var margin = W * 0.10, usable = W - margin * 2;
+  var px = margin + (node.col/3)*usable;
+  var py = H - 32 - node.row*rowH;
+  _camTarget.x = px / W;
+  _camTarget.y = py / H;
+  _camTarget.zoom = zoom || 1.8;
+}
+
+function resetCamera() {
+  _camTarget.x = 0.5;
+  _camTarget.y = 0.5;
+  _camTarget.zoom = 1.0;
+}
+
+function showJournal(chapter, text, isLoading) {
+  var card = document.getElementById('journal-card');
+  if (!card) return;
+  var chapterEl = card.querySelector('.journal-chapter');
+  var textEl = card.querySelector('.journal-text');
+  if (chapterEl) chapterEl.textContent = '📖 ' + (chapter || 'The Expedition');
+  if (textEl) {
+    if (isLoading) {
+      textEl.innerHTML = '<div class="journal-loading"><span class="spin">🌀</span> Writing…</div>';
+    } else {
+      textEl.innerHTML = '';
+      // Word-by-word typewriter
+      var words = (text || '').split(' ');
+      var delay = 0;
+      var chunkSize = 3;
+      for (var i = 0; i < words.length; i += chunkSize) {
+        (function(chunk, d) {
+          setTimeout(function() {
+            if (!textEl) return;
+            var span = document.createElement('span');
+            span.textContent = chunk + ' ';
+            span.style.opacity = '0';
+            span.style.transition = 'opacity 0.25s ease';
+            textEl.appendChild(span);
+            requestAnimationFrame(function() {
+              requestAnimationFrame(function() { span.style.opacity = '1'; });
+            });
+          }, d);
+        })(words.slice(i, i + chunkSize).join(' '), delay);
+        delay += 80;
+      }
+    }
+  }
+  card.classList.add('visible');
+}
+
+function hideJournal() {
+  var card = document.getElementById('journal-card');
+  if (!card) return;
+  card.classList.remove('visible');
 }
 
 function animateSpireMap(canvasId, highlights) {
@@ -1106,11 +1162,26 @@ function render() {
   else if (S.screen === 'game')  {
     app.innerHTML = rGame();
     if (S.prevNodePos != null && S.prevNodePos !== S.nodePos) {
+      // Zoom into current node, then show journal
+      setCameraToNode(S.nodePos, 1.8);
       animateMarkerTravel('main-map', S.prevNodePos, S.nodePos, function() {
         S.prevNodePos = null;
       });
+      // Show journal after camera settles
+      setTimeout(function() {
+        var latest = S.passages.length ? S.passages[S.passages.length-1] : null;
+        if (latest && !S.storyLoading) {
+          showJournal(latest.chapter, latest.text, false);
+        }
+      }, 800);
     } else {
+      // Already at position — show full map then journal
+      resetCamera();
       startSpireMap('main-map', null);
+      setTimeout(function() {
+        var latest = S.passages.length ? S.passages[S.passages.length-1] : null;
+        if (latest) showJournal(latest.chapter, latest.text, false);
+      }, 400);
     }
   }
   else if (S.screen === 'chore') {
@@ -1166,17 +1237,15 @@ function rGame() {
   var latest = S.passages.length ? S.passages[S.passages.length-1] : null;
   var cur = currentNode();
   var nt = cur ? NODE_TYPES[cur.type] : NODE_TYPES.start;
-  var row = cur ? cur.row : 0;
   var resCards = RES.map(function(r) {
     var v=S.resources[r.id], danger=v<=20, warn=v<=15?'Critical!':v<=30?'Low':'';
     return '<div class="res-card'+(danger?' danger':'')+'"><span class="res-icon">'+r.icon+'</span><span class="res-label">'+r.name+'</span><div class="res-track"><div class="res-fill" style="width:'+v+'%;background:'+r.bar+'"></div></div><span class="res-val" style="color:'+r.color+'">'+v+'</span>'+(warn?'<span class="res-warn">'+warn+'</span>':'')+'</div>';
   }).join('');
-  var sceneHtml = '';
-  if (false) sceneHtml = ''; // image generation removed
-  else if (S.sceneImageUrl) sceneHtml = '<div class="scene-wrap"><img class="scene-img" src="'+S.sceneImageUrl+'" alt="" onerror="this.parentElement.style.display=\'none\'"></div>';
-  var story = S.storyLoading
-    ? '<div class="loading-row"><span class="spin">🌀</span> Writing your story…</div>'
-    : '<div class="story-body">'+hx(latest ? latest.text : 'The jungle stretches out before you. Mara came this way.')+'</div>';
+
+  var journalInner = S.storyLoading
+    ? '<div class="journal-loading"><span class="spin">🌀</span> Writing…</div>'
+    : (latest ? latest.text : '');
+
   var hist = '';
   if (S.passages.length > 1) {
     hist = '<details><summary class="history-toggle">📜 Journal (' + (S.passages.length-1) + ' previous entries)</summary>'
@@ -1184,15 +1253,23 @@ function rGame() {
           return '<div class="card history-passage"><span class="chapter-label">📖 '+hx(p.chapter)+'</span><div class="story-body">'+hx(p.text)+'</div></div>';
         }).join('') + '</details>';
   }
+
   return '<div class="game-header-row">'
     + '<span class="fredoka game-title" style="display:flex;align-items:center;gap:8px"><svg width="24" height="24" viewBox="0 0 160 160"><defs><clipPath id="wbh"><rect x="6" y="6" width="148" height="148" rx="20"/></clipPath></defs><rect x="2" y="2" width="156" height="156" rx="22" fill="#d4c090" stroke="#3a2208" stroke-width="3"/><rect x="6" y="6" width="148" height="148" rx="19" fill="#e8dbb8"/><rect x="6" y="6" width="148" height="88" rx="19" fill="rgba(175,210,235,0.22)" clip-path="url(#wbh)"/><g clip-path="url(#wbh)"><circle cx="40" cy="31" r="12" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><circle cx="28" cy="36" r="9.5" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><circle cx="53" cy="35" r="10" fill="#f4f0e4" stroke="#3a2208" stroke-width="1"/><rect x="19" y="36" width="44" height="8" fill="#f4f0e4"/><line x1="19" y1="44" x2="63" y2="44" stroke="#3a2208" stroke-width="1"/><circle cx="122" cy="25" r="10" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><circle cx="112" cy="30" r="8" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><circle cx="133" cy="29" r="8.5" fill="#f4f0e4" stroke="#3a2208" stroke-width="0.9"/><rect x="103" y="30" width="38" height="8" fill="#f4f0e4"/><line x1="103" y1="38" x2="141" y2="38" stroke="#3a2208" stroke-width="0.9"/></g><g clip-path="url(#wbh)"><path d="M6 122 L46 44 L86 122 Z" fill="#b4ac8c" stroke="#3a2208" stroke-width="1.8" stroke-linejoin="round"/><path d="M46 44 L38 64 L54 64 Z" fill="#f4f0e4" stroke="#3a2208" stroke-width="1.3"/><path d="M62 122 L100 20 L138 122 Z" fill="#a8a080" stroke="#3a2208" stroke-width="2.3" stroke-linejoin="round"/><path d="M100 20 L90 48 L110 48 Z" fill="#f8f4e8" stroke="#3a2208" stroke-width="1.6"/><path d="M120 122 L146 52 L154 122 Z" fill="#b8b094" stroke="#3a2208" stroke-width="1.6" stroke-linejoin="round"/></g><path d="M6 122 Q40 114 80 118 Q120 122 154 114 L154 148 Q120 154 80 152 Q40 154 6 148 Z" fill="#88a840" stroke="#3a2208" stroke-width="1.2" clip-path="url(#wbh)"/><g clip-path="url(#wbh)"><path d="M64 122 L80 96 L96 122 Z" fill="#c03828" stroke="#1a0804" stroke-width="2" stroke-linejoin="round"/><path d="M74 122 Q80 111 86 122 Z" fill="#100804"/><line x1="100" y1="126" x2="112" y2="123" stroke="#5a3010" stroke-width="2.8" stroke-linecap="round"/><line x1="102" y1="124" x2="114" y2="126" stroke="#4a2808" stroke-width="2.8" stroke-linecap="round"/><path d="M102 126 Q101 118 106 112 Q108 118 106 126 Z" fill="#e87820"/><path d="M104 126 Q103 120 106 116 Q107 121 106 126 Z" fill="#f8d040"/></g></svg> Waybound</span>'
     + '<div class="game-meta"><span class="day-badge">Day ' + (S.choresCompleted+1) + ' · ' + S.choresCompleted + ' chores</span>'
     + '<button class="reset-btn" onclick="confirmReset()">↺ Reset</button></div></div>'
     + '<div class="resources">' + resCards + '</div>'
-    + '<div class="map-canvas-wrap"><canvas id="main-map" style="display:block;width:100%"></canvas></div>'
+    + '<div class="map-canvas-wrap" style="height:520px">'
+    +   '<canvas id="main-map" style="display:block;width:100%;height:100%"></canvas>'
+    +   '<div class="map-fade"></div>'
+    +   '<div id="journal-overlay">'
+    +     '<div id="journal-card">'
+    +       '<span class="journal-chapter">📖 ' + hx(latest ? latest.chapter : 'The Expedition Begins') + '</span>'
+    +       '<div class="journal-text">' + (S.storyLoading ? '<div class="journal-loading"><span class="spin">🌀</span> Writing…</div>' : hx(latest ? latest.text : '')) + '</div>'
+    +     '</div>'
+    +   '</div>'
+    + '</div>'
     + mapLegend()
-    + sceneHtml
-    + '<div class="card story-card"><span class="chapter-label">📖 '+hx(latest?latest.chapter:'The Expedition Begins')+'</span>'+story+'</div>'
     + hist
     + '<button class="fab" onclick="openChore()">✓ Chore Done</button>';
 }
