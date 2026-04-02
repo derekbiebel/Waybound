@@ -115,12 +115,12 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .paths-loading{text-align:center;padding:36px 0;color:var(--text2);font-style:italic}
 /* Map canvas — full unified surface */
 .map-canvas-wrap{position:relative;background:var(--card);border:3px solid var(--border);border-radius:10px;margin-bottom:14px;box-shadow:0 4px 0 var(--border2);overflow:hidden}
-.map-canvas-wrap canvas{display:block;width:100%}
+.map-canvas-wrap canvas{display:block;width:100%;touch-action:none}
 /* Journal overlay — sits on top of map canvas */
 #journal-overlay{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:flex-end;justify-content:center;pointer-events:none;z-index:10}
-#journal-card{width:92%;max-height:62%;background:linear-gradient(160deg,rgba(253,246,232,0.97) 0%,rgba(242,228,196,0.97) 100%);border:2px solid rgba(90,55,18,0.35);border-radius:8px 8px 4px 4px;box-shadow:0 -4px 24px rgba(30,10,0,0.22),inset 0 1px 0 rgba(255,245,210,0.8);padding:16px 18px 20px;overflow-y:auto;pointer-events:none;opacity:0;transform:translateY(30px);transition:opacity 0.5s ease,transform 0.5s ease;margin-bottom:12px;position:relative}
+#journal-card{width:92%;max-height:62%;background:linear-gradient(160deg,rgba(253,246,232,0.97) 0%,rgba(242,228,196,0.97) 100%);border:2px solid rgba(90,55,18,0.35);border-radius:8px 8px 4px 4px;box-shadow:0 -4px 24px rgba(30,10,0,0.22),inset 0 1px 0 rgba(255,245,210,0.8);padding:16px 18px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;pointer-events:none;opacity:0;-webkit-transform:translateY(30px);transform:translateY(30px);transition:opacity 0.5s ease,transform 0.5s ease;-webkit-transition:opacity 0.5s ease,-webkit-transform 0.5s ease;margin-bottom:12px;position:relative;-webkit-tap-highlight-color:transparent}
 #journal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,var(--green) 0,var(--green) 6px,var(--amber) 6px,var(--amber) 12px,#5b9fd4 12px,#5b9fd4 18px,var(--rose) 18px,var(--rose) 24px);opacity:0.45;border-radius:6px 6px 0 0}
-#journal-card.visible{opacity:1;transform:translateY(0);pointer-events:all}
+#journal-card.visible{opacity:1;-webkit-transform:translateY(0);transform:translateY(0);pointer-events:all}
 .journal-chapter{font-size:.62rem;text-transform:uppercase;letter-spacing:.16em;color:var(--purple);display:block;margin-bottom:10px;font-family:'Fredoka',sans-serif}
 .journal-text{font-size:.95rem;line-height:1.9;color:var(--text3);font-family:'Nunito',sans-serif}
 .journal-loading{display:flex;align-items:center;gap:10px;color:var(--text2);font-style:italic;font-size:.9rem}
@@ -592,18 +592,12 @@ async function confirmChore() {
   } else {
     save();
     var latest = S.passages[S.passages.length-1];
-    // Update journal with new passage — it may already be open showing loading state
+    // Zoom into node and show journal now that passage is ready
+    // Arrival flash started 3-5s ago so it's already fading — just show immediately
+    setCameraToNode(chosenNode.id, 1.8);
     setTimeout(function() {
-      setCameraToNode(chosenNode.id, 1.8);
-      setTimeout(function() {
-        if (latest) showJournal(latest.chapter, latest.text, false);
-      }, 700);
-    }, 2600);
-    // Also update immediately if journal is already visible (passage loaded fast)
-    var card = document.getElementById('journal-card');
-    if (card && card.classList.contains('visible') && latest) {
-      showJournal(latest.chapter, latest.text, false);
-    }
+      if (latest) showJournal(latest.chapter, latest.text, false);
+    }, 500);
     showToast('Chore done. The path opens.');
   }
 }
@@ -1045,6 +1039,10 @@ function resetCamera() {
   _camTarget.x = 0.5;
   _camTarget.y = 0.5;
   _camTarget.zoom = 1.0;
+  // Snap immediately — don't lerp back
+  _cam.x = 0.5;
+  _cam.y = 0.5;
+  _cam.zoom = 1.0;
 }
 
 function showJournal(chapter, text, isLoading) {
@@ -1081,12 +1079,21 @@ function showJournal(chapter, text, isLoading) {
     }
   }
   card.classList.add('visible');
+  // Force Safari to register the style change
+  card.style.opacity = '1';
+  card.style.pointerEvents = 'all';
+  card.style.webkitTransform = 'translateY(0)';
+  card.style.transform = 'translateY(0)';
 }
 
 function hideJournal() {
   var card = document.getElementById('journal-card');
   if (!card) return;
   card.classList.remove('visible');
+  card.style.opacity = '0';
+  card.style.pointerEvents = 'none';
+  card.style.webkitTransform = 'translateY(30px)';
+  card.style.transform = 'translateY(30px)';
 }
 
 function animateSpireMap(canvasId, highlights) {
@@ -1196,8 +1203,8 @@ function render() {
       startSpireMap('main-map', null);
       setTimeout(function() {
         var latest = S.passages.length ? S.passages[S.passages.length-1] : null;
-        if (latest) showJournal(latest.chapter, latest.text, false);
-      }, 400);
+        if (latest && !S.storyLoading) showJournal(latest.chapter, latest.text, false);
+      }, 300);
     }
   }
   else if (S.screen === 'chore') {
