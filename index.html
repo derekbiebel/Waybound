@@ -114,8 +114,8 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 .path-node-desc{font-size:.9rem;line-height:1.55;color:var(--text3)}
 .paths-loading{text-align:center;padding:36px 0;color:var(--text2);font-style:italic}
 /* Map canvas — full unified surface */
-.map-canvas-wrap{position:relative;background:var(--card);border:3px solid var(--border);border-radius:10px;margin-bottom:14px;box-shadow:0 4px 0 var(--border2);overflow:hidden}
-.map-canvas-wrap canvas{display:block;width:100%;touch-action:none}
+.map-canvas-wrap{position:relative;background:var(--card);border:3px solid var(--border);border-radius:10px;margin-bottom:14px;box-shadow:0 4px 0 var(--border2)}
+.map-canvas-wrap canvas{display:block;width:100%;touch-action:none;border-radius:7px}
 /* Journal overlay — sits on top of map canvas */
 #journal-overlay{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:flex-end;justify-content:center;pointer-events:none;z-index:10}
 #journal-card{width:92%;max-height:62%;background:linear-gradient(160deg,rgba(253,246,232,0.97) 0%,rgba(242,228,196,0.97) 100%);border:2px solid rgba(90,55,18,0.35);border-radius:8px 8px 4px 4px;box-shadow:0 -4px 24px rgba(30,10,0,0.22),inset 0 1px 0 rgba(255,245,210,0.8);padding:16px 18px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;pointer-events:none;opacity:0;-webkit-transform:translateY(30px);transform:translateY(30px);transition:opacity 0.5s ease,transform 0.5s ease;-webkit-transition:opacity 0.5s ease,-webkit-transform 0.5s ease;margin-bottom:12px;position:relative;-webkit-tap-highlight-color:transparent}
@@ -1288,7 +1288,7 @@ function rGame() {
     +   '<div id="journal-overlay">'
     +     '<div id="journal-card">'
     +       '<span class="journal-chapter">📖 ' + hx(latest ? latest.chapter : 'The Expedition Begins') + '</span>'
-    +       '<div class="journal-text">' + (S.storyLoading ? '<div class="journal-loading"><span class="spin">🌀</span> Writing…</div>' : hx(latest ? latest.text : '')) + '</div>'
+    +       '<div class="journal-text"></div>'
     +     '</div>'
     +   '</div>'
     + '</div>'
