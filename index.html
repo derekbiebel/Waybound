@@ -1019,6 +1019,45 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
   ctx.restore(); // close camera transform
 }
 
+function setCameraToFrameNodes(canvasIdAndNodeIds) {
+  // First arg is canvas ID, rest are node IDs
+  var canvasId = canvasIdAndNodeIds[0];
+  var nodeIds = canvasIdAndNodeIds.slice(1);
+  var canvas = document.getElementById(canvasId);
+  var W = canvas ? canvas.offsetWidth : 380;
+  var fullH = NUM_ROWS * 80 + 52;
+
+  // Compute bounding box of all nodes
+  var xs = [], ys = [];
+  nodeIds.forEach(function(id) {
+    var node = NODES[id];
+    if (!node) return;
+    var margin = W * 0.10, usable = W - margin * 2;
+    xs.push(margin + (node.col/3)*usable);
+    ys.push(fullH - 32 - node.row*80);
+  });
+  if (!xs.length) return;
+
+  var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+  var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+  var midX = (minX + maxX) / 2;
+  var midY = (minY + maxY) / 2;
+
+  // Zoom to fit nodes with padding
+  var spanX = Math.max(maxX - minX, 60);
+  var spanY = Math.max(maxY - minY, 60);
+  var zoom = Math.min(W / (spanX * 3.5), 2.2);
+  zoom = Math.max(zoom, 1.2);
+
+  _camTarget.x = midX / W;
+  _camTarget.y = midY / fullH;
+  _camTarget.zoom = zoom;
+  // Snap immediately
+  _cam.x = _camTarget.x;
+  _cam.y = _camTarget.y;
+  _cam.zoom = _camTarget.zoom;
+}
+
 function setCameraToNode(nodeId, zoom) {
   var node = NODES[nodeId];
   if (!node) return;
@@ -1212,6 +1251,8 @@ function render() {
     resetCamera();
     if (S.choreStep === 1 && !S.pathsLoading) {
       var nextIds = S.pathOptions.map(function(p) { return p.nodeId; });
+      // Frame the current node and next nodes
+      setCameraToFrameNodes(['chore-map', S.nodePos].concat(nextIds));
       startSpireMap('chore-map', nextIds);
     } else if (S.choreStep === 1) {
       startSpireMap('chore-map', null);
