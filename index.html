@@ -590,16 +590,14 @@ async function confirmChore() {
     catch(e) { S.endingText = dead ? 'The jungle has you this time. But you will come back.' : 'The temple doors open. Mara\'s journal is on the altar, open to the last page.'; }
     S.endLoading = false; save(); render();
   } else {
-    save(); render();
-    // After arrival flash fades, zoom into node and show journal
+    save();
+    var latest = S.passages[S.passages.length-1];
+    // After arrival flash fades, zoom in and show journal — no full re-render needed
     setTimeout(function() {
       setCameraToNode(chosenNode.id, 1.8);
-      var latest = S.passages[S.passages.length-1];
-      if (latest) {
-        setTimeout(function() {
-          showJournal(latest.chapter, latest.text, false);
-        }, 600);
-      }
+      setTimeout(function() {
+        if (latest) showJournal(latest.chapter, latest.text, false);
+      }, 700);
     }, 2600);
     showToast('Chore done. The path opens.');
   }
@@ -682,12 +680,19 @@ var _camAnimating = false;
 function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, travelT) {
   var canvas = document.getElementById(canvasId);
   if (!canvas) return;
+  var dpr = window.devicePixelRatio || 1;
   var W = canvas.offsetWidth;
   var H = canvas.offsetHeight || (NUM_ROWS * 80 + 52);
   if (!W || W < 10) { requestAnimationFrame(function() { drawSpireMap(canvasId, highlightNextNodes); }); return; }
   var rowH = 80;
-  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+  }
   var ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // reset to DPR scale
   var now = Date.now();
 
   // Lerp camera toward target
@@ -696,23 +701,25 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
   _cam.y    += (_camTarget.y    - _cam.y)    * lerp;
   _cam.zoom += (_camTarget.zoom - _cam.zoom) * lerp;
 
-  // Apply camera: translate so target point is centered, then scale
+  // Apply camera: map is taller than viewport, account for that
+  var fullMapH = NUM_ROWS * rowH + 52;
   ctx.save();
-  var cx = _cam.x * W, cy = _cam.y * H;
+  var cx = _cam.x * W;
+  var cy = _cam.y * fullMapH; // target is in full map coords
   ctx.translate(W/2 - cx * _cam.zoom, H/2 - cy * _cam.zoom);
   ctx.scale(_cam.zoom, _cam.zoom);
 
   // ── BACKGROUND ────────────────────────────────────────────────────────────────
   if (_mapBgImg && _mapBgLoaded) {
     var iw = _mapBgImg.naturalWidth, ih = _mapBgImg.naturalHeight;
-    var scale = Math.max(W / iw, H / ih);
+    var scale = Math.max(W / iw, fullMapH / ih);
     var dw = iw * scale, dh = ih * scale;
-    ctx.drawImage(_mapBgImg, (W-dw)/2, (H-dh)/2, dw, dh);
+    ctx.drawImage(_mapBgImg, (W-dw)/2, (fullMapH-dh)/2, dw, dh);
   } else {
-    ctx.fillStyle = '#e4d8b0'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#e4d8b0'; ctx.fillRect(0, 0, W, fullMapH);
   }
-  // Very light parchment wash — just enough to unify, not enough to obscure
-  ctx.fillStyle = 'rgba(220,198,145,0.22)'; ctx.fillRect(0, 0, W, H);
+  // Very light parchment wash
+  ctx.fillStyle = 'rgba(220,198,145,0.22)'; ctx.fillRect(0, 0, W, fullMapH);
 
   // ── HELPER: draw in sepia ink style ──────────────────────────────────────────
   var INK = 'rgba(22,8,2,1.0)';        // main ink color — pure dark
@@ -1015,15 +1022,16 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
 function setCameraToNode(nodeId, zoom) {
   var node = NODES[nodeId];
   if (!node) return;
-  // We need canvas dimensions to compute normalized position
   var canvas = document.getElementById('main-map');
   var W = canvas ? canvas.offsetWidth : 380;
-  var rowH = 80, H = NUM_ROWS * rowH + 52;
+  var H = canvas ? canvas.offsetHeight : 520;
+  var rowH = 80, fullH = NUM_ROWS * rowH + 52;
   var margin = W * 0.10, usable = W - margin * 2;
   var px = margin + (node.col/3)*usable;
-  var py = H - 32 - node.row*rowH;
+  var py = fullH - 32 - node.row*rowH;
+  // Normalize against full map height, not canvas height
   _camTarget.x = px / W;
-  _camTarget.y = py / H;
+  _camTarget.y = py / fullH;
   _camTarget.zoom = zoom || 1.8;
 }
 
