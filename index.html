@@ -521,7 +521,7 @@ function changeApiKey() {
 
 function openChore() {
   hideJournal();
-  resetCamera();
+  resetCamera(true);
   S.screen = 'chore'; S.choreStep = 0; S.selectedChore = null;
   S.selectedPath = null; S.pathOptions = []; save(); render();
 }
@@ -594,7 +594,7 @@ async function confirmChore() {
     var latest = S.passages[S.passages.length-1];
     // Zoom into node and show journal now that passage is ready
     // Arrival flash started 3-5s ago so it's already fading — just show immediately
-    setCameraToNode(chosenNode.id, 1.8);
+    setCameraToNode(chosenNode.id, 2.0, 'main-map', true);
     setTimeout(function() {
       if (latest) showJournal(latest.chapter, latest.text, false);
     }, 500);
@@ -664,10 +664,13 @@ var mapRaf = null;
 var _mapBgImg = null;
 var _mapBgLoaded = false;
 
-// Camera state for zoom/pan
-var _cam = { x: 0.5, y: 0.5, zoom: 1.0 };         // normalized 0-1
-var _camTarget = { x: 0.5, y: 0.5, zoom: 1.0 };
-var _camAnimating = false;
+// ── CAMERA — world space coordinates ─────────────────────────────────────────
+// World space: map draws in full map height (NUM_ROWS*80+52), canvas width W
+// Camera x,y = world position that appears at canvas center
+var _fullMapH = NUM_ROWS * 80 + 52; // computed once
+var _cam    = { x: 190, y: _fullMapH/2, zoom: 1.0 }; // will snap on first draw
+var _camTgt = { x: 190, y: _fullMapH/2, zoom: 1.0 };
+var _snap   = true;
 
 (function() {
   var img = new Image();
@@ -691,22 +694,27 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
     canvas.style.height = H + 'px';
   }
   var ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // reset to DPR scale
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
   var now = Date.now();
 
-  // Lerp camera toward target
-  var lerp = 0.06;
-  _cam.x    += (_camTarget.x    - _cam.x)    * lerp;
-  _cam.y    += (_camTarget.y    - _cam.y)    * lerp;
-  _cam.zoom += (_camTarget.zoom - _cam.zoom) * lerp;
-
-  // Apply camera: map is taller than viewport, account for that
+  // World space dimensions
   var fullMapH = NUM_ROWS * rowH + 52;
+
+  // Default camera: show full map
+  if (_snap) {
+    _cam.x = _camTgt.x; _cam.y = _camTgt.y; _cam.zoom = _camTgt.zoom;
+    _snap = false;
+  } else {
+    var lerp = 0.08;
+    _cam.x    += (_camTgt.x    - _cam.x)    * lerp;
+    _cam.y    += (_camTgt.y    - _cam.y)    * lerp;
+    _cam.zoom += (_camTgt.zoom - _cam.zoom) * lerp;
+  }
+
+  // Camera transform: world point _cam.{x,y} appears at canvas center
   ctx.save();
-  var cx = _cam.x * W;
-  var cy = _cam.y * fullMapH; // target is in full map coords
-  ctx.translate(W/2 - cx * _cam.zoom, H/2 - cy * _cam.zoom);
+  ctx.translate(W/2 - _cam.x * _cam.zoom, H/2 - _cam.y * _cam.zoom);
   ctx.scale(_cam.zoom, _cam.zoom);
 
   // ── BACKGROUND ────────────────────────────────────────────────────────────────
@@ -730,7 +738,7 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
 
   function nodePos(node) {
     var margin = W * 0.10, usable = W - margin * 2;
-    return {x: margin + (node.col/3)*usable, y: H - 32 - node.row*rowH};
+    return {x: margin + (node.col/3)*usable, y: fullMapH - 32 - node.row*rowH};
   }
 
   // ── PATHS — look like hand-drawn ink routes on the map ──────────────────────
@@ -1019,69 +1027,80 @@ function drawSpireMap(canvasId, highlightNextNodes, travelFromId, travelToId, tr
   ctx.restore(); // close camera transform
 }
 
-function setCameraToFrameNodes(canvasIdAndNodeIds) {
-  // First arg is canvas ID, rest are node IDs
-  var canvasId = canvasIdAndNodeIds[0];
-  var nodeIds = canvasIdAndNodeIds.slice(1);
-  var canvas = document.getElementById(canvasId);
-  var W = canvas ? canvas.offsetWidth : 380;
-  var fullH = NUM_ROWS * 80 + 52;
+// ── CAMERA CONTROL ───────────────────────────────────────────────────────────
 
-  // Compute bounding box of all nodes
+function _nodeWorldPos(node, W) {
+  // Returns world-space position of a node given canvas width W
+  var fullMapH = NUM_ROWS * 80 + 52;
+  var margin = W * 0.10, usable = W - margin * 2;
+  return {
+    x: margin + (node.col/3) * usable,
+    y: fullMapH - 32 - node.row * 80
+  };
+}
+
+function _getCanvasWidth(canvasId) {
+  var c = document.getElementById(canvasId || 'main-map');
+  return (c && c.offsetWidth > 10) ? c.offsetWidth : 380;
+}
+
+function resetCamera(snap) {
+  var W = _getCanvasWidth('main-map');
+  var fullMapH = NUM_ROWS * 80 + 52;
+  // Center the map — show middle of map world
+  _camTgt.x = W / 2;
+  _camTgt.y = fullMapH / 2;
+  _camTgt.zoom = 1.0;
+  if (snap !== false) {
+    _cam.x = _camTgt.x; _cam.y = _camTgt.y; _cam.zoom = _camTgt.zoom;
+    _snap = true;
+  }
+}
+
+function setCameraToNode(nodeId, zoom, canvasId, smooth) {
+  var node = NODES[nodeId];
+  if (!node) return;
+  var W = _getCanvasWidth(canvasId);
+  var pos = _nodeWorldPos(node, W);
+  _camTgt.x = pos.x;
+  _camTgt.y = pos.y;
+  _camTgt.zoom = zoom || 2.0;
+  _snap = !smooth; // snap unless smooth requested
+}
+
+function setCameraToFrameNodes(nodeIds, canvasId, smooth) {
+  // Frame all given node IDs with padding
+  var W = _getCanvasWidth(canvasId);
+  var fullMapH = NUM_ROWS * 80 + 52;
+  var H = Math.min(W * 1.1, fullMapH); // viewport height approx
+
   var xs = [], ys = [];
   nodeIds.forEach(function(id) {
     var node = NODES[id];
     if (!node) return;
-    var margin = W * 0.10, usable = W - margin * 2;
-    xs.push(margin + (node.col/3)*usable);
-    ys.push(fullH - 32 - node.row*80);
+    var p = _nodeWorldPos(node, W);
+    xs.push(p.x); ys.push(p.y);
   });
-  if (!xs.length) return;
+  if (!xs.length) { resetCamera(true); return; }
 
   var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
   var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
   var midX = (minX + maxX) / 2;
   var midY = (minY + maxY) / 2;
 
-  // Zoom to fit nodes with padding
-  var spanX = Math.max(maxX - minX, 60);
-  var spanY = Math.max(maxY - minY, 60);
-  var zoom = Math.min(W / (spanX * 3.5), 2.2);
-  zoom = Math.max(zoom, 1.2);
+  // Zoom so nodes fit in viewport with generous padding
+  var padFactor = 3.5;
+  var spanX = Math.max(maxX - minX + 80, 120);
+  var spanY = Math.max(maxY - minY + 80, 120);
+  var zoomX = W / (spanX * padFactor);
+  var zoomY = H / (spanY * padFactor);
+  var zoom = Math.min(zoomX, zoomY, 2.2);
+  zoom = Math.max(zoom, 1.0);
 
-  _camTarget.x = midX / W;
-  _camTarget.y = midY / fullH;
-  _camTarget.zoom = zoom;
-  // Snap immediately
-  _cam.x = _camTarget.x;
-  _cam.y = _camTarget.y;
-  _cam.zoom = _camTarget.zoom;
-}
-
-function setCameraToNode(nodeId, zoom) {
-  var node = NODES[nodeId];
-  if (!node) return;
-  var canvas = document.getElementById('main-map');
-  var W = canvas ? canvas.offsetWidth : 380;
-  var H = canvas ? canvas.offsetHeight : 520;
-  var rowH = 80, fullH = NUM_ROWS * rowH + 52;
-  var margin = W * 0.10, usable = W - margin * 2;
-  var px = margin + (node.col/3)*usable;
-  var py = fullH - 32 - node.row*rowH;
-  // Normalize against full map height, not canvas height
-  _camTarget.x = px / W;
-  _camTarget.y = py / fullH;
-  _camTarget.zoom = zoom || 1.8;
-}
-
-function resetCamera() {
-  _camTarget.x = 0.5;
-  _camTarget.y = 0.5;
-  _camTarget.zoom = 1.0;
-  // Snap immediately — don't lerp back
-  _cam.x = 0.5;
-  _cam.y = 0.5;
-  _cam.zoom = 1.0;
+  _camTgt.x = midX;
+  _camTgt.y = midY;
+  _camTgt.zoom = zoom;
+  _snap = !smooth;
 }
 
 function showJournal(chapter, text, isLoading) {
@@ -1222,23 +1241,17 @@ function render() {
   else if (S.screen === 'game')  {
     app.innerHTML = rGame();
     if (S.prevNodePos != null && S.prevNodePos !== S.nodePos) {
-      // Zoom into current node, then show journal
-      setCameraToNode(S.nodePos, 1.8);
+      setCameraToNode(S.nodePos, 2.0, 'main-map', false);
       animateMarkerTravel('main-map', S.prevNodePos, S.nodePos, function() {
         S.prevNodePos = null;
       });
-      // Show journal after camera settles — loading state first, content when ready
       setTimeout(function() {
         var latest = S.passages.length ? S.passages[S.passages.length-1] : null;
-        if (S.storyLoading) {
-          showJournal('Writing…', '', true);
-        } else if (latest) {
-          showJournal(latest.chapter, latest.text, false);
-        }
-      }, 800);
+        if (S.storyLoading) showJournal('Writing…', '', true);
+        else if (latest) showJournal(latest.chapter, latest.text, false);
+      }, 600);
     } else {
-      // Already at position — show full map then journal
-      resetCamera();
+      resetCamera(true);
       startSpireMap('main-map', null);
       setTimeout(function() {
         var latest = S.passages.length ? S.passages[S.passages.length-1] : null;
@@ -1248,14 +1261,13 @@ function render() {
   }
   else if (S.screen === 'chore') {
     app.innerHTML = rChore();
-    resetCamera();
     if (S.choreStep === 1 && !S.pathsLoading) {
       var nextIds = S.pathOptions.map(function(p) { return p.nodeId; });
-      // Frame the current node and next nodes
-      setCameraToFrameNodes(['chore-map', S.nodePos].concat(nextIds));
+      setCameraToFrameNodes([S.nodePos].concat(nextIds), 'chore-map', false);
       startSpireMap('chore-map', nextIds);
-    } else if (S.choreStep === 1) {
-      startSpireMap('chore-map', null);
+    } else {
+      resetCamera(true);
+      if (S.choreStep === 1) startSpireMap('chore-map', null);
     }
   }
   else if (S.screen === 'end')   { app.innerHTML = rEnd(); }
